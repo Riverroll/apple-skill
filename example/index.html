@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Northwind Vessel</title>
+<link rel="stylesheet" href="../skills/apple-design/assets/apple-base.css">
+<style>
+  :root { --accent: #0071e3; }
+  .feature-grid { display: grid; gap: 20px; grid-template-columns: repeat(3, 1fr); width: 100%; margin-top: 2em; }
+  @media (max-width: 1068px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 734px)  { .feature-grid { grid-template-columns: 1fr; } }
+  .feature-card { border-radius: var(--radius-card); background: var(--surface); overflow: hidden; padding: 40px 28px; text-align: left; }
+  .section--alt .feature-card { background: var(--surface); }
+  .card-media { aspect-ratio: 3 / 2; border-radius: var(--radius-tile); margin-bottom: var(--headline-plus-first);
+                background: linear-gradient(135deg, #e8e8ed, #f5f5f7); }
+  .section--dark .feature-card { background: #1d1d1f; }
+</style>
+</head>
+<body>
+  <section class="section">
+    <div class="section-content">
+      <p class="t-eyebrow-super" data-reveal>Northwind&nbsp;Vessel</p>
+      <h1 class="t-headline-elevated" data-reveal>Built to hold heat.</h1>
+      <p class="t-intro" data-reveal>Eighteen hours hot. Twenty-four cold. One wall of vacuum between them.</p>
+      <div class="cta-row" data-reveal>
+        <a class="button" href="#">Learn more</a>
+        <a class="button button--secondary" href="#">Buy</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="section-content">
+      <h2 class="t-headline" data-reveal>Every part earns its place.</h2>
+      <div class="feature-grid">
+        <div class="feature-card stagger-item" data-reveal>
+          <div class="card-media"></div>
+          <h3 class="t-label">Vacuum wall</h3>
+          <p class="t-body">Two steel shells, nothing between them. Heat has no path out.</p>
+        </div>
+        <div class="feature-card stagger-item" data-reveal>
+          <div class="card-media"></div>
+          <h3 class="t-label">One-turn cap</h3>
+          <p class="t-body">Sealed in a single motion. Opens the same way, cold hands or not.</p>
+        </div>
+        <div class="feature-card stagger-item" data-reveal>
+          <div class="card-media"></div>
+          <h3 class="t-label">Steel, all through</h3>
+          <p class="t-body">No liner, no coating, no lining to flake. Just one material.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--dark">
+    <div class="section-content">
+      <h2 class="t-headline" data-reveal>Cold for a day.</h2>
+      <p class="t-intro" data-reveal>Fill it at dawn. It will still be cold when you get back.</p>
+    </div>
+  </section>
+
+<script type="module">
+  // The hidden state is applied here, not in CSS, so the page stays readable
+  // if this script never runs.
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const items = document.querySelectorAll("[data-reveal]");
+  if (!reduced) {
+    for (const el of items) el.classList.add("reveal--initial");
+    document.querySelectorAll(".feature-grid").forEach(g =>
+      g.querySelectorAll(".stagger-item").forEach((el, i) => el.style.setProperty("--i", i)));
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        e.target.classList.replace("reveal--initial", "reveal--active");
+        io.unobserve(e.target);
+      }
+    }, { rootMargin: "0px 0px -15% 0px" });
+    for (const el of items) io.observe(el);
+  }
+</script>
+</body>
+</html>

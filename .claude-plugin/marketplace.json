@@ -1,0 +1,11 @@
+{
+  "name": "apple-skill",
+  "owner": { "name": "Riverroll" },
+  "plugins": [
+    {
+      "name": "apple-skill",
+      "source": "./",
+      "description": "Apple's design system for Claude Code: measured type scale, spacing rhythm, motion curves, layout contracts and copy voice."
+    }
+  ]
+}
