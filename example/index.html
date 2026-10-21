@@ -18,6 +18,7 @@
 </style>
 </head>
 <body>
+<main>
   <section class="section">
     <div class="section-content">
       <p class="t-eyebrow-super" data-reveal>Northwind&nbsp;Vessel</p>
@@ -59,6 +60,7 @@
       <p class="t-intro" data-reveal>Fill it at dawn. It will still be cold when you get back.</p>
     </div>
   </section>
+</main>
 
 <script type="module">
   // The hidden state is applied here, not in CSS, so the page stays readable
@@ -79,5 +81,11 @@
     for (const el of items) io.observe(el);
   }
 </script>
+  <section class="section">
+    <div class="section-content">
+      <p class="t-body-reduced" data-reveal>Tested to 18&nbsp;hours hot and 24&nbsp;hours cold at 20&nbsp;°C ambient, lid closed.</p>
+      <p class="t-caption">Figures from internal testing. Real-world performance varies with fill volume, ambient temperature and how often the vessel is opened.</p>
+    </div>
+  </section>
 </body>
 </html>

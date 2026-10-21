@@ -34,12 +34,33 @@ Tracking is a function of size, and it crosses zero around 20px:
 | 21px | `+0.011em` | intro / lead paragraph |
 | 24px | `+0.009em` | label |
 | 32px | `+0.004em` | large eyebrow |
-| 40px | `0em` | section headline |
+| 40px | `0em` | headline-reduced — the crossover, exactly zero |
+| 48px | `-0.003em` | section headline |
+| 56px | `-0.005em` | weight 700, the only one |
 | 64px | `-0.009em` | hero headline |
 
 The shape: tightest at body size, loosening through the small display sizes,
 then tightening again as display sizes get large. Setting one flat tracking
 value across a page is the single most common way this system is faked badly.
+
+## The headline ladder
+
+Apple ships seven headline steps. Each has its own line-height and tracking —
+they are not one size scaled:
+
+| class | size | line-height | weight | tracking |
+|---|---|---|---|---|
+| `headline-standalone` | 96px | 1.0416666667 | 600 | `-0.015em` |
+| `headline-super` | 80px | 1.05 | 600 | `-0.015em` |
+| `headline-section` | 72px | 1.05556 | 600 | `-0.012em` |
+| `headline-elevated` | 64px | 1.0625 | 600 | `-0.009em` |
+| `section-headline` | 56px | 1 | **700** | `-0.005em` |
+| `headline` | 48px | 1.0834933333 | 600 | `-0.003em` |
+| `headline-reduced` | 40px | 1.1 | 600 | `0em` |
+
+Note the two exceptions people get wrong: the 56px step is the only **700** in
+the system, and the 40px step is tracked at exactly **0em** — which computes to
+`normal`. 40px is the crossover where optical tracking changes sign.
 
 ## The sizes you need
 

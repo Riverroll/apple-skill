@@ -17,7 +17,9 @@ Apple's because the proportions are exact, not approximately right.
    above.
 2. **Tracking goes negative as type grows.** Body 17px is `-0.022em`. Headline
    64px is `-0.009em`. Small *display* sizes go positive: 21px intro is
-   `+0.011em`. Never ship `letter-spacing: normal` on a headline.
+   `+0.011em`. It crosses zero at 40px, which Apple tracks at exactly `0em`.
+   Pick a value from the table for every size — the only headline that may
+   compute to `normal` is that 40px step.
 3. **Vertical rhythm is in `em`, not `px`,** so it scales with the type it sits
    under. See the stacked-margin tokens in `references/layout.md`.
 4. **Content is centered in a 1068px column** on desktop, 734px on tablet. These

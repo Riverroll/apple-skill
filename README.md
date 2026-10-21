@@ -68,3 +68,18 @@ MIT, for the skill's own text and CSS.
 `example/index.html` is a small page built only from the tokens in
 `assets/apple-base.css` — hero, feature grid, dark section, staggered reveal.
 Open it to see the system working, and as a shape to copy.
+
+## Testing
+
+The suite asserts a page built with the skill against Apple's own shipped
+values — computed styles in a real browser, compared to `assets/type-scale.json`:
+
+```sh
+node test/structure.mjs                 # the skill loads, refs resolve, no Apple assets
+node test/conformance.mjs <url>         # computed styles vs the measured values
+```
+
+It checks the type scale, the tracking table, button geometry, the palette,
+the em rhythm ladder, the content column at each breakpoint, that type is
+re-picked rather than scaled on phone, that no text is lost with JS disabled,
+and that motion collapses under `prefers-reduced-motion`.
