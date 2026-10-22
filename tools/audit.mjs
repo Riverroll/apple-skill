@@ -117,7 +117,12 @@ function probeFn() {
   // where it would report a false failure.
   const bgBehind = (el) => {
     for (let n = el; n; n = n.parentElement) {
-      const v = rgba(getComputedStyle(n).backgroundColor);
+      const cs = getComputedStyle(n);
+      // A gradient has no single colour behind the text. Assuming the page
+      // default here reported every element on a gradient page as 1:1, which
+      // is noise, not a finding. Say "unknown" and skip the check instead.
+      if (cs.backgroundImage && cs.backgroundImage !== "none") return null;
+      const v = rgba(cs.backgroundColor);
       if (v && v.a > 0.5) return v;
     }
     return { r: 255, g: 255, b: 255, a: 1 };
@@ -142,11 +147,12 @@ function probeFn() {
           bump(out.inks, key(cs.color));
           note(out.inksWhere, key(cs.color), pathOf(el));
         }
-        const a = lum(c), b = lum(bgBehind(el));
+        const bg = bgBehind(el);
+        const a = lum(c), b = bg ? lum(bg) : 0;
         const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
         const size = parseFloat(cs.fontSize);
         const large = size >= 24 || (size >= 18.66 && +cs.fontWeight >= 700);
-        if (ratio < (large ? 3 : 4.5) && c.a > 0.3)
+        if (bg && ratio < (large ? 3 : 4.5) && c.a > 0.3)
           out.contrast.push({ where: pathOf(el), colour: key(cs.color), ratio: +ratio.toFixed(2), size });
       }
 
@@ -426,6 +432,178 @@ function probeErpFn() {
   return JSON.stringify(out);
 }
 
+// ------------------------------------------------------------ the soul probe
+// Restraint says what to take away. Nothing in it says what has to be there,
+// so a page can score perfectly and still be a blank canvas with good margins.
+// This measures what a visitor actually SEES at every screenful of scroll, and
+// looks for the specific tells of a generated page.
+//
+// Measured on 8 apple.com product pages for the thresholds below:
+//   media 38% · flat 51% · text 12% · gradient 6% · scale contrast x6.7
+//   screens with no image at all: 22%
+function probeSoulFn() {
+  const out = {
+    screens: 0, media: 0, gradient: 0, text: 0, flat: 0,
+    deadScreens: 0, big: 0, bodySize: 0, scaleContrast: 0,
+    tells: [], mediaCount: 0,
+  };
+
+  // Media often sits in a sibling layer BEHIND the copy, so walking up from
+  // the topmost hit element finds a text wrapper and calls the screen empty.
+  // The whole stack under the point is the only honest read.
+  const classify = (x, y) => {
+    const stack = document.elementsFromPoint(x, y);
+    let grad = false, text = false;
+    for (const n of stack) {
+      if (n === document.body || n === document.documentElement) break;
+      if (["IMG", "PICTURE", "VIDEO", "CANVAS", "IFRAME", "svg"].indexOf(n.tagName) !== -1) return "media";
+      const cs = getComputedStyle(n);
+      const bi = cs.backgroundImage;
+      if (bi && bi !== "none") { if (/gradient/.test(bi)) grad = true; else return "media"; }
+      if (!text) {
+        for (const c of n.childNodes) if (c.nodeType === 3 && c.textContent.trim()) { text = true; break; }
+      }
+    }
+    return grad ? "gradient" : text ? "text" : "flat";
+  };
+
+  const was = window.scrollY;
+  const H = window.innerHeight, W = window.innerWidth;
+  const total = document.body.scrollHeight;
+  const counts = { media: 0, gradient: 0, text: 0, flat: 0 };
+  let screens = 0, dead = 0;
+  for (let top = 0; top + 80 < total && screens < 60; top += H) {
+    window.scrollTo(0, top);
+    let m = 0, g = 0;
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      const k = classify((c + 0.5) * W / 8, (r + 0.5) * H / 8);
+      counts[k]++;
+      if (k === "media") m++;
+      if (k === "gradient") g++;
+    }
+    if (m === 0 && g === 0) dead++;
+    screens++;
+  }
+  window.scrollTo(0, was);
+  const pts = Math.max(1, screens * 64);
+  out.screens = screens;
+  out.media = +(counts.media / pts).toFixed(3);
+  out.gradient = +(counts.gradient / pts).toFixed(3);
+  out.text = +(counts.text / pts).toFixed(3);
+  out.flat = +(counts.flat / pts).toFixed(3);
+  out.deadScreens = dead;
+
+  // ------------------------------------------------------- scale contrast
+  const sizes = {};
+  const shown = (el) => {
+    const cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden") return null;
+    const b = el.getBoundingClientRect();
+    return b.width > 0 && b.height > 0 ? cs : null;
+  };
+  const all = [];
+  for (const el of document.querySelectorAll("body *")) { const cs = shown(el); if (cs) all.push([el, cs]); }
+  for (const [el, cs] of all) {
+    let owns = false;
+    for (const n of el.childNodes) if (n.nodeType === 3 && n.textContent.trim()) { owns = true; break; }
+    if (!owns) continue;
+    const s = Math.round(parseFloat(cs.fontSize));
+    sizes[s] = (sizes[s] || 0) + 1;
+    if (s > out.big) out.big = s;
+  }
+  const ranked = Object.entries(sizes).sort((a, b) => b[1] - a[1]);
+  out.bodySize = ranked.length ? +ranked[0][0] : 0;
+  out.scaleContrast = out.bodySize ? +(out.big / out.bodySize).toFixed(2) : 0;
+  out.mediaCount = document.querySelectorAll("img, picture, video, canvas, iframe").length;
+
+  // ------------------------------------------------------------- the tells
+  const tell = (what, detail) => out.tells.push(detail ? what + " — " + detail : what);
+
+  let gradText = 0;
+  for (const [el, cs] of all) {
+    if ((cs.webkitBackgroundClip === "text" || cs.backgroundClip === "text") &&
+        /gradient/.test(cs.backgroundImage)) gradText++;
+  }
+  if (gradText) tell("a gradient on the type", gradText + " element(s); apple.com does this on zero headlines");
+
+  let glass = 0;
+  for (const [el, cs] of all) {
+    const f = cs.backdropFilter || cs.webkitBackdropFilter || "";
+    if (/blur/.test(f) && !el.closest("nav, header, [role=\"banner\"], [role=\"navigation\"]")) glass++;
+  }
+  if (glass >= 3) tell("glass cards", glass + " blurred panels outside the nav");
+
+  const EMOJI = /[\u{1F300}-\u{1FAFF}\u{1F000}-\u{1F2FF}\u{2600}-\u{27BF}]/u;
+  let emoji = 0;
+  for (const [el, cs] of all) {
+    if (el.children.length) continue;            // the leaf that holds the glyph
+    const t = (el.textContent || "").trim();
+    if (t.length <= 4 && EMOJI.test(t)) emoji++;
+  }
+  if (emoji >= 2) tell("emoji used as icons", emoji + " of them");
+
+  // three equal cards, over and over: one layout idea repeated until the page ends
+  const sections = [];
+  for (const el of document.querySelectorAll("section, main > div, .section")) {
+    const cs = shown(el); if (cs) sections.push([el, cs]);
+  }
+  let triples = 0, centered = 0;
+  const heights = [];
+  for (const [sec, cs] of sections) {
+    heights.push(Math.round(sec.getBoundingClientRect().height));
+    if (cs.textAlign === "center") centered++;
+    for (const box of sec.querySelectorAll("*")) {
+      const bcs = getComputedStyle(box);
+      if (!/grid|flex/.test(bcs.display)) continue;
+      // three equal columns, however many cards are poured into them
+      const tracks = (bcs.gridTemplateColumns || "").split(" ").map(parseFloat).filter((n) => n > 0);
+      if (tracks.length === 3 && Math.max(...tracks) - Math.min(...tracks) <= 2 && tracks[0] > 80) {
+        triples++; break;
+      }
+      const kids = [...box.children].filter((k) => getComputedStyle(k).display !== "none");
+      if (kids.length !== 3) continue;
+      const ws = kids.map((k) => Math.round(k.getBoundingClientRect().width));
+      if (ws[0] > 80 && Math.max(...ws) - Math.min(...ws) <= 2) { triples++; break; }
+    }
+  }
+  if (triples >= 3) tell("three equal cards in " + triples + " sections", "one layout idea repeated");
+  if (sections.length >= 4 && centered / sections.length >= 0.8)
+    tell("every section centered", centered + " of " + sections.length + "; centering applied everywhere emphasises nothing");
+
+  // no loud, no quiet: a page where every screen weighs the same
+  if (heights.length >= 4) {
+    const mean = heights.reduce((a, b) => a + b, 0) / heights.length;
+    const sd = Math.sqrt(heights.reduce((a, h) => a + (h - mean) ** 2, 0) / heights.length);
+    out.sectionCv = +(sd / mean).toFixed(2);
+    if (sd / mean < 0.18) tell("every section the same height", "cv " + (sd / mean).toFixed(2) + " — the page never changes pace");
+  }
+
+  const body = (document.body.innerText || "").toLowerCase();
+  if (/lorem ipsum|dolor sit amet/.test(body)) tell("lorem ipsum shipped");
+  const WORDS = ["elevate", "seamless", "unleash", "supercharge", "transform your", "empower",
+    "revolutioniz", "unlock", "effortless", "game-chang", "next-level", "cutting-edge",
+    "leverage", "holistic", "curated", "journey"];
+  const heads = [...document.querySelectorAll("h1, h2, h3")].map((h) => (h.textContent || "").toLowerCase()).join(" ");
+  const hits = WORDS.filter((w) => heads.indexOf(w) !== -1);
+  if (hits.length >= 2) tell("generated-page vocabulary in the headlines", hits.join(", "));
+
+  const srcs = [...document.querySelectorAll("img, source")].map((i) => i.src || i.srcset || "").join(" ");
+  const bgs = all.map(([, cs]) => cs.backgroundImage).join(" ");
+  if (/picsum\.photos|placehold|via\.placeholder|unsplash\.com\/random|source\.unsplash/.test(srcs + bgs))
+    tell("placeholder image service in the markup", "a wireframe shipped as a design");
+
+  let plates = 0;
+  for (const [el, cs] of all) {
+    const b = el.getBoundingClientRect();
+    if (b.width < 32 || b.width > 72 || Math.abs(b.width - b.height) > 4) continue;
+    const r = parseFloat(cs.borderTopLeftRadius);
+    if (r >= 6 && r < b.width / 2 && el.querySelector("svg, img")) plates++;
+  }
+  if (plates >= 6) tell("icon plates", plates + " small rounded squares with a glyph in them — an icon is not media");
+
+  return JSON.stringify(out);
+}
+
 // ------------------------------------------------------------------ driver
 export async function runAudit(url, widths = WIDTHS, mode = null) {
 const prof = fs.mkdtempSync(os.tmpdir() + "/audit-");
@@ -472,6 +650,9 @@ const measure = async (width) => {
     const e = await call("Runtime.evaluate", { expression: `(${probeErpFn.toString()})()`, returnByValue: true });
     if (e.exceptionDetails) { console.error(e.exceptionDetails.text); throw new Error(e.exceptionDetails.text); }
     page.erp = JSON.parse(e.result.value);
+    const sl = await call("Runtime.evaluate", { expression: `(${probeSoulFn.toString()})()`, returnByValue: true });
+    if (sl.exceptionDetails) { console.error(sl.exceptionDetails.text); throw new Error(sl.exceptionDetails.text); }
+    page.soul = JSON.parse(sl.result.value);
   }
   return page;
 };
@@ -487,6 +668,7 @@ try {
 
 const d = byWidth[widths[0]];
 const e = d.erp || {};
+const sl = d.soul || {};
 
 // A dense tool is a different product with different numbers. Guessing is
 // cheap and checkable: a real grid, or an aria grid role, or more rows than a
@@ -722,6 +904,42 @@ if (useErp) {
         "In a tool: 80ms hover, 150ms state, 200ms for a panel. Anything performed hundreds of times a day animates in 0ms — charming once, an obstacle the three-hundredth time.");
 }
 
+
+// ------------------------------------------------------------- is it alive
+// A marketing page's job is to make someone want the thing. Restraint only
+// says what to take away; these say what has to be there. Measured on eight
+// apple.com product pages: 38% of what a visitor sees is a photograph or
+// video, 12% is text, and the largest type is x6.7 the body size.
+if (!useErp && sl.screens) {
+  const pc = (n) => Math.round(n * 100) + "%";
+
+  if (sl.media < 0.15)
+    add(10, `only ${pc(sl.media)} of what a visitor sees is a picture`,
+        `${pc(sl.flat)} of the page is flat colour, ${pc(sl.text)} is text, and there are ${sl.mediaCount} media element(s) in the markup`,
+        "apple.com's median is 38% media against 12% text — roughly three times as much picture as copy. A page at this level has nothing to look at, and no amount of spacing fixes that. See references/composition.md for the ratios and references/imagery.md for where real images come from, including when the project arrives with none.");
+
+  if (sl.deadScreens / sl.screens > 0.35)
+    add(9, `${sl.deadScreens} of ${sl.screens} screenful(s) contain no image at all`,
+        "a reader can scroll a whole viewport and see only colour and type",
+        "Apple's own rate is about one screen in five, and those are the rests — spec tables, footnotes, the footer. A rest only reads as a rest if something came before it.");
+
+  if (sl.media >= 0.15 && sl.flat > 0.7)
+    add(8, `${pc(sl.flat)} of the page is flat surface colour`,
+        `media ${pc(sl.media)} · text ${pc(sl.text)} · gradient ${pc(sl.gradient)}`,
+        "Apple's median is 51% flat, and that is with full-bleed media carrying the rest. Make the pictures bigger before adding anything new.");
+
+  if (sl.scaleContrast && sl.scaleContrast < 4.5)
+    add(7, `the largest type is only x${sl.scaleContrast} the body size`,
+        `${sl.big}px over ${sl.bodySize}px`,
+        "apple.com's median is x6.7 — 96px over 17px. Below about x4 everything on the page is talking at the same volume, which reads as a document rather than a page.");
+
+  if ((sl.tells || []).length)
+    add(8, `${sl.tells.length} tell(s) of a generated page`,
+        "each one is in references/composition.md with what it costs",
+        "Three or more of these and the page reads as slop regardless of how good the spacing is. They are all removable in an afternoon.",
+        sl.tells);
+}
+
 findings.sort((a, b) => b.weight - a.weight);
 
 // ------------------------------------------------------------------ output
@@ -732,6 +950,10 @@ const summary = {
   stickyBlocked: d.stickyBlocked.length, stickyScoped: (d.stickyScoped || []).length, stickyOk: d.stickyOk,
   contrastFails: d.contrast.length, dimmed: d.dimmed.length, nodes: d.nodes,
   mode: useErp ? "erp" : "page", dense: !!looksDense,
+  mediaShare: sl.media ?? null, flatShare: sl.flat ?? null, textShare: sl.text ?? null,
+  screens: sl.screens ?? 0, deadScreens: sl.deadScreens ?? 0,
+  scaleContrast: sl.scaleContrast ?? 0, mediaCount: sl.mediaCount ?? 0,
+  tells: (sl.tells || []).length,
   tables: e.tables || 0, rows: e.rows || 0,
   headNotSticky: (e.headNotSticky || []).length,
   firstColNotSticky: (e.firstColNotSticky || []).length,
@@ -759,6 +981,8 @@ function report(url, { summary, findings, byWidth }, widths = WIDTHS) {
     console.log(`  dense-tool mode · ${summary.tables} table(s), ${summary.rows} rows · the marketing padding, headline and parallax checks are off`);
   else if (summary.dense)
     console.log(`  scored as a marketing page, but this looks like a tool — re-run with --mode erp`);
+  if (summary.mode !== "erp" && summary.screens)
+    console.log(`  what a visitor sees: ${Math.round(summary.mediaShare * 100)}% picture · ${Math.round(summary.textShare * 100)}% text · ${Math.round(summary.flatShare * 100)}% flat colour  (apple.com: 38 / 12 / 51)`);
   console.log("");
   if (!findings.length) {
     if (summary.mode === "erp") {
@@ -800,6 +1024,8 @@ function reportDelta(was, now) {
     rowHeights: "row heights", doubleSep: "tables separated twice",
     truncated: "truncations with no title", offGrid: "spacings off the 4px grid",
     biggestType: "largest type on screen",
+    deadScreens: "screens with no image", tells: "generated-page tells",
+    scaleContrast: "scale contrast", mediaCount: "media elements",
   };
   console.log("  change since baseline\n");
   let moved = false;

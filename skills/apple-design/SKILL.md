@@ -34,6 +34,43 @@ centered 1068px column into every project, so everything built with this skill
 looks the same. The tokens below are **roles with measured relationships**. Map
 them onto the colours the design already has.
 
+## Read this second: a correct page can still be dead
+
+Everything below describes what to **remove**. Nothing in it says what has to
+be **there**, and that gap is where pages built from this skill go wrong.
+
+Measured on eight apple.com product pages, sampling what is actually under a
+64-point grid at every screenful of scroll:
+
+| What a visitor sees | apple.com |
+|---|---|
+| photograph or video | **38%** |
+| flat surface colour | 51% |
+| text | 12% |
+
+Three times as much picture as text. The same measurement on this skill's own
+showcase page — which scores 100/100 on the audit — is **0% picture, 88% flat,
+every screen empty**. Perfect tokens, nothing to look at. That page is the
+failure this section exists to prevent.
+
+So, before any of the numbers below:
+
+- **Every screen that is not a deliberate rest needs a subject.** One per
+  screen, big, cropped so it bleeds off two edges.
+- **No more than one screenful in four without an image.** Apple's own rate is
+  22%, and those are the rests — specs, footnotes, footer.
+- **Scale contrast of ×6.** Largest type over body size; apple.com's median is
+  ×6.7. Under ×4.5 everything is talking at the same volume.
+- **The page has to change pace.** Loud, quiet, loud, quiet. A page of
+  identical sections at identical weight is the actual mechanism behind "this
+  looks AI-made" — not the colours, the monotony.
+- **If no images were provided, go and find them.** That is part of building
+  the page, not a blocker to hand back. `references/imagery.md` has verified
+  sources, the licence rules and the crop rules.
+
+Read `references/composition.md` before writing any marketing page, and
+`references/imagery.md` before deciding a page has to ship without pictures.
+
 ## First decide which product this is
 
 The numbers below are measured from a **marketing page**: read once, three
@@ -186,6 +223,11 @@ notices; everything below them is what they feel.
 
 The default order, when the audit is clean or unavailable:
 
+0. **Composition.** Is there a subject on every screen, big enough and cropped
+   hard enough to be the point of it? If the answer is no, nothing below will
+   fix the page. `references/composition.md`, then `references/imagery.md` to
+   source what is missing. This step is first because it is the only one that
+   can make a page people want to look at.
 1. **Restraint.** Collapse to one accent, three ink steps, three radii, two
    weights. `references/restraint.md`. This is almost always the visible fix,
    and it is *not* a palette change — the hues stay, they just stop competing.
@@ -228,6 +270,17 @@ Load only the reference you need:
 - `references/dark.md` — read before applying any of this to a site that is
   dark all the way through. Four of the system's colour habits invert and one
   of them (alpha ink under an opacity reveal) breaks silently.
+- `references/composition.md` — **read before building any marketing page.**
+  What has to be in it: the measured media-to-text ratio, the subject
+  hierarchy, cropping, sequence and pace, and the countable tells of a
+  generated page.
+- `references/imagery.md` — where real images come from when the project
+  provides none: verified sources, licences and attribution, art direction per
+  breakpoint, the performance contract, and the honesty rules.
+- `references/micro.md` — where components sit, and how they move: the
+  measured `dotnav`, `paddlenav` and `tabnav` token blocks, the carousel dot
+  that tapers instead of paginating, the autoplay dot that becomes a progress
+  track, and the six rules behind all of it.
 - `references/erp.md` — **read first if this is a tool, not a page.** The dense
   type ladder, the one row-height token, the table and form contracts, the
   shell layout, the semantic colour set that is the one exemption to one
@@ -244,6 +297,11 @@ focus rings, with the marketing padding, headline and parallax checks switched
 off. Without the flag it detects a dense screen and says so rather than giving
 a page of advice that would make the tool worse.
 
+On a marketing page it also samples what a
+visitor actually sees at every screenful of scroll and reports it against
+apple.com's own 38 / 12 / 51 split, so "it feels empty" becomes a number
+instead of an argument.
+
 It measures at
 1440 / 900 / 500px, so it also catches headlines that were scaled on phone
 rather than re-picked. Save a baseline before you start and diff against it
@@ -258,6 +316,11 @@ node tools/audit.mjs <url> --baseline before.json
 The delta is how you show someone what the pass did. Without it, a page whose
 rhythm improved looks unchanged, and the only honest answer to "did anything
 change?" is a shrug.
+
+`example/soul/flop.html` and `alive.html` are the composition pair: nine tells
+and 0% picture against zero findings and 48% picture. The copy differs between
+them on purpose — a page whose headlines are "Elevate Your Morning Ritual" has
+a content problem, and composition is the one pass that is allowed to fix it.
 
 `example/erp/before.html` and `after.html` are the same purchase-order screen,
 21 findings down to none, with every word of its data intact — the dense

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teko &middot; alive</title>
+<style>
+:root {
+  --ink:#1d1d1f; --ink-secondary:#57575c; --ink-muted:#6e6e73;
+  --surface:#ffffff; --surface-alt:#f5f3f0; --hairline:#e6e2dc;
+  --accent:#9c4a1a; --on-accent:#fff;
+  --radius-pill:980px; --radius-card:28px; --radius-tile:12px;
+  --ease-standard:cubic-bezier(.4,0,.6,1); --ease-out-soft:cubic-bezier(0,0,.5,1);
+  
+  --t-hero-size:96px;   --t-hero-line:1.0416666667; --t-hero-track:-0.015em;
+  --t-head-size:48px;   --t-head-line:1.0834933333; --t-head-track:-0.003em;
+  --t-intro-size:21px;  --t-intro-line:1.381002381; --t-intro-track:0.011em;
+  --t-body-size:17px;   --t-body-line:1.4705882353; --t-body-track:-0.022em;
+  --t-cap-size:12px;    --t-cap-line:1.3333733333;  --t-cap-track:-0.01em;
+
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent);text-decoration:none}
+:where(a,button):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.col{max-width:1068px;margin:0 auto;padding-inline:24px}
+.hero{position:relative;min-height:100vh;display:flex;align-items:flex-end;
+  padding-bottom:80px;overflow:hidden;background:#1a1512}
+.hero .bed{position:absolute;inset:0}
+.hero svg,.band svg,.crop svg,.tall svg{width:100%;height:100%;display:block}
+.hero .col{position:relative}
+h1{font-size:var(--t-hero-size);line-height:var(--t-hero-line);letter-spacing:var(--t-hero-track);
+  font-weight:600;margin:0;color:#f5f3f0;max-width:14ch}
+.hero p{font-size:var(--t-intro-size);line-height:var(--t-intro-line);letter-spacing:var(--t-intro-track);
+  color:#d8d2ca;margin:0.4em 0 0;max-width:30ch}
+
+h2{font-size:var(--t-head-size);line-height:var(--t-head-line);letter-spacing:var(--t-head-track);
+  font-weight:600;margin:0}
+.intro{font-size:var(--t-intro-size);line-height:var(--t-intro-line);letter-spacing:var(--t-intro-track);
+  color:var(--ink-secondary);margin:0.8em 0 0;max-width:34ch}
+p.body{font-size:var(--t-body-size);line-height:var(--t-body-line);letter-spacing:var(--t-body-track);
+  color:var(--ink-secondary);margin:0.8em 0 0;max-width:38ch}
+.cap{font-size:var(--t-cap-size);line-height:var(--t-cap-line);letter-spacing:var(--t-cap-track);
+  color:var(--ink-muted);margin:0.8em 0 0}
+
+.rest{padding-block:100px;background:var(--surface)}
+.rest.alt{background:var(--surface-alt)}
+.band{height:62vh;overflow:hidden;background:#f0eae2}
+.crops{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding-block:40px}
+.crop{aspect-ratio:4/3;border-radius:var(--radius-card);overflow:hidden}
+.split{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:40px;
+  padding-block:60px}
+.tall{height:92vh;border-radius:var(--radius-card);overflow:hidden}
+.stats{display:flex;gap:80px;padding-block:40px;flex-wrap:wrap}
+.stat b{display:block;font-size:var(--t-head-size);line-height:var(--t-head-line);
+  letter-spacing:var(--t-head-track);font-weight:600}
+.cta{display:inline-flex;align-items:center;height:48px;padding-inline:24px;
+  border-radius:var(--radius-pill);background:var(--accent);color:var(--on-accent);
+  font-size:var(--t-body-size);letter-spacing:var(--t-body-track);font-weight:600;
+  margin-top:0.8em;transition:background 250ms var(--ease-standard)}
+footer{padding-block:48px;border-top:1px solid var(--hairline)}
+/* the headline is re-picked on phone, not scaled: 96px/-0.015em -> 40px/0em */
+@media (max-width:734px){
+  :root{
+    --t-hero-size:40px; --t-hero-line:1.1; --t-hero-track:0em;
+    --t-head-size:32px; --t-head-line:1.125; --t-head-track:0.004em;
+  }
+  .split,.crops{grid-template-columns:1fr}
+  .stats{gap:32px}
+  .rest{padding-block:60px}
+}
+@media (prefers-reduced-motion:reduce){*{transition-duration:1ms!important}}
+</style></head><body>
+<section class="hero">
+  <div class="bed"><svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img"
+     aria-label="Teko tanah di atas bara, uap naik ke kiri">
+  <rect width="1600" height="900" fill="#1a1512"/>
+  <circle cx="1120" cy="980" r="620" fill="#2b211b"/>
+  <path d="M470 560c0-150 120-270 270-270s270 120 270 270v70c0 40-30 70-70 70H540c-40 0-70-30-70-70z" fill="#8a4a24"/>
+  <path d="M470 560c0-150 120-270 270-270 40 0 78 9 112 25-130 40-222 160-222 302v83H540c-40 0-70-30-70-70z" fill="#a85c2d"/>
+  <path d="M1010 430c90-10 150 40 150 110s-70 110-150 96" fill="none" stroke="#8a4a24" stroke-width="42" stroke-linecap="round"/>
+  <path d="M700 240c0-40 30-70 80-70s80 30 80 70" fill="none" stroke="#6f3a1b" stroke-width="30" stroke-linecap="round"/>
+  <ellipse cx="740" cy="286" rx="268" ry="46" fill="#c2743c"/>
+  <path d="M690 180c-30-60 20-90 10-150s-40-70-10-120" fill="none" stroke="#b9b3ab" stroke-width="12" stroke-linecap="round" opacity="0.55"/>
+  <path d="M780 170c-34-64 24-96 12-160" fill="none" stroke="#b9b3ab" stroke-width="10" stroke-linecap="round" opacity="0.4"/>
+  <ellipse cx="760" cy="840" rx="470" ry="90" fill="#120d0b"/>
+  <circle cx="520" cy="818" r="26" fill="#c2410c"/>
+  <circle cx="640" cy="846" r="18" fill="#ea580c"/>
+  <circle cx="880" cy="836" r="22" fill="#c2410c"/>
+</svg></div>
+  <div class="col">
+    <h1>Tanah. Air. Api.</h1>
+    <p>Teko yang dibakar dua kali, dipakai dua puluh tahun.</p>
+  </div>
+</section>
+
+<section class="rest"><div class="col">
+  <p class="intro">Setiap teko dibentuk dengan tangan di Plered, lalu dibakar
+  dua kali — sekali untuk badannya, sekali untuk kulitnya.</p>
+</div></section>
+
+<section class="band"><svg viewBox="0 0 1600 560" preserveAspectRatio="xMidYMid slice" role="img"
+     aria-label="Lima cangkir dilihat dari atas di meja tanah">
+  <rect width="1600" height="560" fill="#f0eae2"/>
+  <g fill="#1f1a16">
+    <circle cx="150" cy="300" r="150"/><circle cx="500" cy="230" r="150"/>
+    <circle cx="850" cy="320" r="150"/><circle cx="1200" cy="220" r="150"/>
+    <circle cx="1540" cy="330" r="150"/>
+  </g>
+  <g fill="#3a2a1d">
+    <circle cx="150" cy="300" r="108"/><circle cx="500" cy="230" r="108"/>
+    <circle cx="850" cy="320" r="108"/><circle cx="1200" cy="220" r="108"/>
+    <circle cx="1540" cy="330" r="108"/>
+  </g>
+  <g fill="#0f0b08" opacity="0.85">
+    <circle cx="150" cy="300" r="78"/><circle cx="500" cy="230" r="78"/>
+    <circle cx="850" cy="320" r="78"/><circle cx="1200" cy="220" r="78"/>
+    <circle cx="1540" cy="330" r="78"/>
+  </g>
+</svg></section>
+
+<section class="rest alt"><div class="col">
+  <h2>Dibakar dua kali.</h2>
+  <p class="body">Pembakaran pertama mengunci bentuk. Yang kedua, pada 1.180
+  derajat, menutup pori-porinya sampai air tidak lagi meresap.</p>
+  <div class="crops">
+    <div class="crop"><svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" role="img"
+     aria-label="Permukaan tanah teko dari dekat, jejak tangan pembuatnya">
+  <rect width="800" height="600" fill="#6f3a1b"/>
+  <g stroke="#8a4a24" stroke-width="26" fill="none" stroke-linecap="round">
+    <path d="M-40 90c160 60 300 60 460 0s300-60 460 0"/>
+    <path d="M-40 230c160 60 300 60 460 0s300-60 460 0"/>
+    <path d="M-40 370c160 60 300 60 460 0s300-60 460 0"/>
+    <path d="M-40 510c160 60 300 60 460 0s300-60 460 0"/>
+  </g>
+  <circle cx="620" cy="180" r="190" fill="#a85c2d" opacity="0.6"/>
+</svg></div>
+    <div class="crop"><svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" role="img"
+     aria-label="Bara di bawah teko, menjelang subuh">
+  <rect width="800" height="600" fill="#120d0b"/>
+  <circle cx="300" cy="420" r="300" fill="#2b1a10"/>
+  <circle cx="330" cy="470" r="150" fill="#7c2d12"/>
+  <circle cx="300" cy="500" r="82" fill="#c2410c"/>
+  <circle cx="560" cy="300" r="34" fill="#ea580c"/>
+  <circle cx="660" cy="430" r="20" fill="#c2410c"/>
+</svg></div>
+  </div>
+  <p class="cap">Kiri: permukaan sebelum bakaran kedua. Kanan: bara, pukul empat subuh.</p>
+</div></section>
+
+<section class="rest"><div class="col split">
+  <div>
+    <h2>Satu teko. Dua puluh tahun.</h2>
+    <p class="body">Tanah Plered menyimpan panas lebih lama daripada logam.
+    Air mendidih lambat, dan tetap hangat satu jam setelah api mati.</p>
+    <a class="cta" href="#">Lihat prosesnya</a>
+  </div>
+  <div class="tall"><svg viewBox="0 0 900 1200" preserveAspectRatio="xMidYMid slice" role="img"
+     aria-label="Teko berdiri sendiri di cahaya samping">
+  <rect width="900" height="1200" fill="#141210"/>
+  <path d="M250 760c0-230 90-400 200-400s200 170 200 400c0 120-60 190-200 190s-200-70-200-190z" fill="#8a4a24"/>
+  <path d="M250 760c0-230 90-400 200-400 24 0 47 8 68 23-86 70-138 220-138 377 0 110 36 170 110 186-150 4-240-66-240-186z" fill="#a85c2d"/>
+  <ellipse cx="450" cy="360" rx="150" ry="30" fill="#c2743c"/>
+  <path d="M420 300c0-30 14-50 44-50s44 20 44 50" fill="none" stroke="#6f3a1b" stroke-width="22" stroke-linecap="round"/>
+  <ellipse cx="450" cy="1010" rx="300" ry="54" fill="#0b0908"/>
+</svg></div>
+</div></section>
+
+<section class="rest alt"><div class="col">
+  <div class="stats">
+    <div class="stat"><b>1.180°</b><p class="cap">Suhu bakaran kedua</p></div>
+    <div class="stat"><b>2×</b><p class="cap">Jumlah pembakaran</p></div>
+    <div class="stat"><b>14 hari</b><p class="cap">Pengeringan sebelum dibakar</p></div>
+  </div>
+</div></section>
+
+<footer><div class="col"><p class="cap">Plered, Jawa Barat.</p></div></footer>
+</body></html>

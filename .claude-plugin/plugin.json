@@ -1,7 +1,7 @@
 {
   "name": "apple-skill",
-  "version": "1.4.0",
-  "description": "Design and build interfaces with Apple's system: restraint rules, measured type scale, spacing rhythm, motion and parallax, layout contracts, editorial voice, and a dense-tool mode for ERPs and admin panels — plus an audit that measures any live page against them.",
+  "version": "1.5.0",
+  "description": "Build and audit interfaces with Apple's craft: what has to be in a page (measured media-to-text ratio, subject, crop, pace) as well as what to take out — restraint, type scale, rhythm, motion, the measured carousel and tab components, a dense-tool mode for ERPs, and an audit that scores any live page against all of it.",
   "author": {
     "name": "Riverroll"
   }

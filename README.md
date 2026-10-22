@@ -132,6 +132,49 @@ fix, it is a different site.
 
 ## Scope
 
+## A correct page can still be dead
+
+Restraint says what to take away. Nothing in it says what has to be there, so a
+page can score 100/100 and be a blank canvas with good margins. Measured on
+eight apple.com product pages, sampling what sits under a 64-point grid at
+every screenful of scroll:
+
+| What a visitor sees | apple.com | this repo's own showcase page |
+|---|---|---|
+| photograph or video | **38%** | **0%** |
+| flat surface colour | 51% | 88% |
+| text | 12% | 8% |
+
+`references/composition.md` carries the ratios, the subject hierarchy, how hard
+to crop, how a long page changes pace, and the countable tells of a generated
+page — gradient type, glass cards, emoji icons, three equal cards forever, the
+"elevate / seamless / unleash" vocabulary. `references/imagery.md` is how to
+source real images when the project provides none, with verified APIs, licence
+and attribution rules, per-breakpoint art direction and the honesty rules.
+
+The audit measures all of it, so "it feels empty" stops being an argument:
+
+```
+  what a visitor sees: 0% picture · 4% text · 92% flat colour  (apple.com: 38 / 12 / 51)
+
+  1. only 0% of what a visitor sees is a picture
+  2. 2 of 5 screenful(s) contain no image at all
+  3. the largest type is only x3.76 the body size
+```
+
+`example/soul/` is the worked pair: nine tells and 0% picture, against zero
+findings and 48% picture.
+
+## Components, and how they move
+
+`references/micro.md` is read straight out of apple.com's `--sk-dotnav-*`,
+`--sk-paddlenav-*` and `--tabnav-*` token blocks: the 8px dot inside a 24px
+target, the resting alpha of 0.42, hover at 120ms linear against a slide change
+at 320ms ease-in-out, the overflow that tapers dots to 0.75 then 0.5 instead of
+paginating, the 40ms stagger between neighbours, the autoplay dot that morphs
+into a 32px progress track, and the one selector most hand-built carousels miss
+— `:focus-visible` on paddles that are hidden until hover.
+
 ## Tools are not pages
 
 An ERP, an admin panel or a dashboard shares the craft and almost none of the
@@ -182,6 +225,7 @@ node test/structure.mjs                 # the skill loads, refs resolve, no Appl
 node test/conformance.mjs <url>         # computed styles vs the measured values
 node test/restraint.mjs                 # the before/after pair, self-contained
 node test/erp.mjs                      # the dense-tool pair, self-contained
+node test/composition.mjs              # the soul pair, self-contained
 ```
 
 105 checks: the restraint counts (one accent hue, at most seven text colours,

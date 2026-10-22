@@ -35,10 +35,16 @@ const after  = await runAudit(`${base}/example/fix-me/after.html`);
 server.close();
 
 const titles = (r) => r.findings.map((f) => f.title).join(" | ");
+// This pair is deliberately about *vocabulary* — one accent, three inks, one
+// tracking per size. Neither page has a picture in it, so the composition
+// checks fire on both, and they should: see test/composition.mjs for that
+// half of the problem.
+const COMPOSITION = /picture|screenful|flat surface colour|scale contrast|largest type is only|generated page/;
+const restraintFindings = (r) => r.findings.filter((f) => !COMPOSITION.test(f.title));
 
 // --- the audit catches a realistic mess
-ok("before: the audit has something to say", before.findings.length >= 4,
-   `${before.findings.length} findings`);
+ok("before: the audit has something to say", restraintFindings(before).length >= 4,
+   `${restraintFindings(before).length} restraint findings`);
 ok("before: flags the accent scatter", /accent hues/.test(titles(before)), titles(before));
 ok("before: flags the ink scatter", /text colours/.test(titles(before)), titles(before));
 ok("before: flags display type tracked normal", /letter-spacing: normal/.test(titles(before)));
@@ -46,7 +52,12 @@ ok("before: flags the padding scatter", /section paddings/.test(titles(before)))
 ok("before: flags a headline frozen across widths", /never step down/.test(titles(before)));
 
 // --- following the rules clears it
-ok("after: nothing countable is left", after.findings.length === 0, titles(after));
+ok("after: nothing countable is left", restraintFindings(after).length === 0, titles(after));
+// and the honest half: fixing the vocabulary did not give the page anything
+// to look at, and the audit says so on both sides
+ok("both sides are still blank canvases, and the audit says so",
+   before.summary.mediaShare === 0 && after.summary.mediaShare === 0,
+   "restraint is not composition");
 ok("after: one accent hue", after.summary.hues <= 1, String(after.summary.hues));
 ok("after: ink steps are down to a system", after.summary.inks <= 7, String(after.summary.inks));
 ok("after: no display size is tracked normal", after.summary.strayNormal === 0);
@@ -74,5 +85,5 @@ ok("still a dark site", Object.keys(dark(after)).some((c) => /23[0-9], 23[0-9]|2
 
 const passed = checks.filter((c) => c.pass).length;
 console.log(`\nrestraint  ${passed}/${checks.length}`);
-console.log(`  before: ${before.findings.length} findings   after: ${after.findings.length}`);
+console.log(`  before: ${restraintFindings(before).length} restraint findings   after: ${restraintFindings(after).length}`);
 process.exit(passed === checks.length ? 0 : 1);
