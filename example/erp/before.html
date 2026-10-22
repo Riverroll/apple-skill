@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nusantara Trading &middot; before</title>
+<style>
+:root{
+  --ink:#1d1d1f; --ink-secondary:#57575c; --ink-muted:#9b9ba1;
+  --surface:#ffffff; --surface-alt:#f6f6f8; --hairline:#e3e3e7;
+  --accent:#4f46e5;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+button,input,select,a{font:inherit;outline:none}
+a{color:var(--accent);text-decoration:none}
+
+.shell{display:flex;min-height:100vh}
+.side{width:230px;flex:none;background:var(--surface-alt);padding:18px 14px;border-right:1px solid var(--hairline)}
+.brand{font-size:18px;font-weight:700;letter-spacing:normal;margin:0 0 18px;color:#0ea5a4}
+.side ul{list-style:none;margin:0;padding:0 0 0 10px}
+.side li{font-size:13px;line-height:26px;color:var(--ink-secondary)}
+.side li a{color:inherit}
+.side li.on>a{color:#db2777;font-weight:700}
+
+main{flex:1;padding:80px;min-width:0}
+h1{font-size:48px;line-height:1.05;letter-spacing:normal;font-weight:700;margin:0 0 6px;
+   background:linear-gradient(90deg,#4f46e5,#db2777);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{font-size:17px;color:var(--ink-muted);margin:0 0 18px}
+
+.bar{display:flex;gap:14px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+.chip{height:24px;padding:0 10px;border-radius:6px;border:1px solid var(--hairline);
+  background:#ecfeff;color:#0e7490;font-size:11px;display:inline-flex;align-items:center;
+  transition:background 400ms cubic-bezier(.4,0,.6,1)}
+.chip:hover{background:#cffafe}
+.btn{height:26px;padding:0 14px;border-radius:14px;border:0;background:var(--accent);color:#fff;
+  font-size:13px;transition:transform 600ms cubic-bezier(.3,2,.5,1)}
+.btn:hover{transform:translateY(-1px)}
+.btn--ghost{background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe}
+
+.grid-holder{overflow:auto;border:1px solid var(--hairline);border-radius:10px}
+table{border-collapse:collapse;min-width:1520px;width:100%}
+thead th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  text-align:left;color:var(--ink-muted);padding:14px 10px;
+  background:linear-gradient(#fafafa,#f0f0f3);border-bottom:2px solid var(--hairline)}
+tbody td{font-size:15px;padding:10px;border-top:1px solid var(--hairline);
+  border-left:1px solid var(--hairline);color:var(--ink);text-align:left;vertical-align:middle}
+tbody tr:nth-child(odd){background:#fbfbfd}
+tbody tr:hover{background:#eef2ff;transition:background 400ms linear}
+tbody tr:nth-child(3n) td{padding:18px 10px}
+tbody tr:nth-child(4n) td{padding:6px 10px}
+.po{font-size:13px;color:var(--accent);font-weight:700}
+.desc{max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-secondary)}
+.when{font-size:13px;color:var(--ink-muted)}
+.act{display:flex;gap:6px}
+.icon{width:20px;height:20px;border-radius:6px;border:1px solid var(--hairline);background:#fff;font-size:11px;line-height:1}
+.act button:nth-child(1){color:#2563eb;border-color:#bfdbfe}
+.act button:nth-child(2){color:#f59e0b;border-color:#fde68a}
+.act button:nth-child(3){color:#f43f5e;border-color:#fecdd3}
+.badge{height:18px;padding:0 8px;border-radius:4px;font-size:11px;font-weight:700;display:inline-flex;align-items:center}
+.badge--success{background:#10b981;color:#fff}
+.badge--warning{background:#f59e0b;color:#fff}
+.badge--critical{background:#f43f5e;color:#fff}
+.badge--neutral{background:#94a3b8;color:#fff}
+tfoot td{font-size:17px;font-weight:700;padding:14px 10px;border-top:2px solid var(--hairline)}
+
+.panel{margin-top:40px;max-width:520px}
+.panel h2{font-size:28px;letter-spacing:normal;font-weight:700;margin:0 0 18px}
+.fld{margin-bottom:18px}
+.fld label{display:block;font-size:11px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.06em}
+.fld input{width:100%;height:26px;padding:0 6px;font-size:15px;border:1px solid var(--hairline);border-radius:6px;color:var(--ink)}
+.fld:nth-child(even) label{margin-bottom:14px}
+.fld:nth-child(3n) label{margin-bottom:18px}
+.fld:nth-child(4n) label{margin-bottom:10px}
+.hint{font-size:11px;color:var(--ink-muted);margin-top:6px}
+</style></head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <p class="brand">Nusantara Trading</p>
+    <nav><ul><li><a href="#">Beranda</a></li><li><a href="#">Pengadaan</a><ul><li><a href="#">Permintaan</a></li><li class="on"><a href="#">Purchase Order</a></li><li><a href="#">Penerimaan</a></li></ul></li><li><a href="#">Keuangan</a><ul><li><a href="#">Hutang</a><ul><li><a href="#">Faktur</a></li></ul></li></ul></li></ul></nav>
+  </aside>
+  <main>
+    <h1>Purchase Order</h1>
+    <p class="sub">Dokumen pembelian untuk periode Maret 2026.</p>
+    <div class="bar">
+      <button class="chip">Semua status</button><button class="chip">Bulan ini</button><button class="chip">Gudang Cakung</button>
+      <button class="btn">Buat PO</button>
+      <button class="btn btn--ghost">Ekspor</button>
+    </div>
+    <div class="grid-holder"><table><thead><tr><th>Nomor PO</th><th>Pemasok</th><th>Keterangan</th><th>Tanggal</th><th>Qty</th><th>Nilai (IDR)</th><th>Status</th><th>Aksi</th></tr></thead><tbody><tr><td><span class="po">PO-2026-0147</span></td><td>PT Baja Nusantara</td><td class="desc">Plat baja SS400 tebal 12mm, potong ukuran gudang Cakung</td><td class="when">14 Mar 2026</td><td>240</td><td>1.250.000</td><td><span class="badge badge--success">Posted</span></td><td><span class="act"><button class="icon" aria-label="Lihat">L</button><button class="icon" aria-label="Ubah">U</button><button class="icon" aria-label="Hapus">H</button></span></td></tr><tr><td><span class="po">PO-2026-0148</span></td><td>CV Sumber Logistik</td><td class="desc">Sewa truk wingbox 20 ton rute Surabaya menuju Balikpapan</td><td class="when">14 Mar 2026</td><td>4</td><td>88.400.000</td><td><span class="badge badge--warning">Pending</span></td><td><span class="act"><button class="icon" aria-label="Lihat">L</button><button class="icon" aria-label="Ubah">U</button><button class="icon" aria-label="Hapus">H</button></span></td></tr><tr><td><span class="po">PO-2026-0149</span></td><td>PT Mitra Kimia</td><td class="desc">Resin epoksi tipe industrial, drum 200 liter, grade A</td><td class="when">15 Mar 2026</td><td>18</td><td>412.900</td><td><span class="badge badge--success">Posted</span></td><td><span class="act"><button class="icon" aria-label="Lihat">L</button><button class="icon" aria-label="Ubah">U</button><button class="icon" aria-label="Hapus">H</button></span></td></tr><tr><td><span class="po">PO-2026-0150</span></td><td>UD Terang Jaya</td><td class="desc">Lampu sorot LED 150 watt beserta bracket pemasangan tiang</td><td class="when">16 Mar 2026</td><td>1.200</td><td>7.500.000</td><td><span class="badge badge--neutral">Draft</span></td><td><span class="act"><button class="icon" aria-label="Lihat">L</button><button class="icon" aria-label="Ubah">U</button><button class="icon" aria-label="Hapus">H</button></span></td></tr><tr><td><span class="po">PO-2026-0151</span></td><td>PT Anugrah Pipa</td><td class="desc">Pipa galvanis 4 inci panjang 6 meter, standar SNI</td><td class="when">17 Mar 2026</td><td>96</td><td>128.750</td><td><span class="badge badge--critical">Overdue</span></td><td><span class="act"><button class="icon" aria-label="Lihat">L</button><button class="icon" aria-label="Ubah">U</button><button class="icon" aria-label="Hapus">H</button></span></td></tr><tr><td><span class="po">PO-2026-0152</span></td><td>CV Karya Mandiri</td><td class="desc">Jasa perbaikan conveyor lini dua, termasuk penggantian belt</td><td class="when">18 Mar 2026</td><td>2</td><td>34.000.000</td><td><span class="badge badge--warning">Pending</span></td><td><span class="act"><button class="icon" aria-label="Lihat">L</button><button class="icon" aria-label="Ubah">U</button><button class="icon" aria-label="Hapus">H</button></span></td></tr><tr><td><span class="po">PO-2026-0153</span></td><td>PT Sentosa Semen</td><td class="desc">Semen portland tipe satu, kemasan 50 kilogram per sak</td><td class="when">18 Mar 2026</td><td>3.400</td><td>560.000.000</td><td><span class="badge badge--success">Posted</span></td><td><span class="act"><button class="icon" aria-label="Lihat">L</button><button class="icon" aria-label="Ubah">U</button><button class="icon" aria-label="Hapus">H</button></span></td></tr><tr><td><span class="po">PO-2026-0154</span></td><td>PT Elektro Prima</td><td class="desc">Panel distribusi tegangan rendah lengkap dengan proteksi arus</td><td class="when">19 Mar 2026</td><td>6</td><td>92.300</td><td><span class="badge badge--critical">Rejected</span></td><td><span class="act"><button class="icon" aria-label="Lihat">L</button><button class="icon" aria-label="Ubah">U</button><button class="icon" aria-label="Hapus">H</button></span></td></tr><tr><td><span class="po">PO-2026-0155</span></td><td>UD Sinar Abadi</td><td class="desc">Sarung tangan nitril ukuran large, satu dus isi seribu lembar</td><td class="when">20 Mar 2026</td><td>48</td><td>1.875.000</td><td><span class="badge badge--success">Posted</span></td><td><span class="act"><button class="icon" aria-label="Lihat">L</button><button class="icon" aria-label="Ubah">U</button><button class="icon" aria-label="Hapus">H</button></span></td></tr><tr><td><span class="po">PO-2026-0156</span></td><td>PT Jaya Beton</td><td class="desc">Beton siap pakai mutu K300, pengiriman bertahap selama dua hari</td><td class="when">21 Mar 2026</td><td>150</td><td>48.600.000</td><td><span class="badge badge--warning">Pending</span></td><td><span class="act"><button class="icon" aria-label="Lihat">L</button><button class="icon" aria-label="Ubah">U</button><button class="icon" aria-label="Hapus">H</button></span></td></tr></tbody><tfoot><tr><td colspan="5">Total 10 dokumen</td><td>733.661.050</td><td></td><td></td></tr></tfoot></table></div>
+    <section class="panel"><h2>Rincian dokumen</h2><div class="fld"><label for="f0">Pemasok</label><input id="f0" value="PT Baja Nusantara"></div><div class="fld"><label for="f1">Gudang</label><input id="f1" value="Cakung"></div><div class="fld"><label for="f2">Mata uang</label><input id="f2" value="IDR"></div><div class="fld"><label for="f3">Termin</label><input id="f3" value="30 hari"></div><div class="fld"><label for="f4">Dibuat oleh</label><input id="f4" value="Nauval"></div><div class="fld"><label for="f5">Referensi</label><input id="f5" value="REQ-2026-0912"></div><div class="fld"><label for="f6">Catatan</label><input id="f6" value="Kirim sebelum akhir bulan"></div><div class="fld"><label for="f7">Disetujui oleh</label><input id="f7" value="Hendra"></div><p class="hint">Perubahan tersimpan saat dokumen diposting.</p></section>
+  </main>
+</div>
+</body></html>

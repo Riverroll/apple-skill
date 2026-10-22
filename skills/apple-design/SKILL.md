@@ -34,6 +34,26 @@ centered 1068px column into every project, so everything built with this skill
 looks the same. The tokens below are **roles with measured relationships**. Map
 them onto the colours the design already has.
 
+## First decide which product this is
+
+The numbers below are measured from a **marketing page**: read once, three
+words per headline, 100px between sections. A **tool** — an ERP, an admin
+panel, a dashboard, anything someone operates for eight hours — shares the
+craft and almost none of the numbers.
+
+| | Marketing page | Dense tool |
+|---|---|---|
+| Body | 17px | 14px |
+| Largest type | 64–96px | 28px |
+| Section padding | 80–100px | 16–24px gutter |
+| Default transition | 250ms | 150ms |
+| Scroll-linked motion | the signature | delete it |
+
+If the thing has a data grid in it, **read `references/erp.md` before this
+file's numbers**, and run the audit with `--mode erp`. Applying the marketing
+ladder to a purchase-order screen turns twenty-four visible rows into six, and
+the people who use it all day will be right to hate it.
+
 ## Token roles
 
 ```css
@@ -208,12 +228,23 @@ Load only the reference you need:
 - `references/dark.md` — read before applying any of this to a site that is
   dark all the way through. Four of the system's colour habits invert and one
   of them (alpha ink under an opacity reveal) breaks silently.
+- `references/erp.md` — **read first if this is a tool, not a page.** The dense
+  type ladder, the one row-height token, the table and form contracts, the
+  shell layout, the semantic colour set that is the one exemption to one
+  accent, and what motion is for when the user is not a visitor.
 - `references/stacks.md` — how the tokens, breakpoints and type ladder are
   expressed in Tailwind, CSS modules and CSS-in-JS, plus the migration order
   that keeps a page shippable at every commit. Tailwind's default breakpoints
   are *not* these breakpoints.
 
-`tools/audit.mjs` runs against any live URL and changes nothing. It measures at
+`tools/audit.mjs` runs against any live URL and changes nothing. Pass
+`--mode erp` for a tool and it scores against `references/erp.md` instead —
+alignment, sticky headers, tabular numerals, row-height tokens, hit targets and
+focus rings, with the marketing padding, headline and parallax checks switched
+off. Without the flag it detects a dense screen and says so rather than giving
+a page of advice that would make the tool worse.
+
+It measures at
 1440 / 900 / 500px, so it also catches headlines that were scaled on phone
 rather than re-picked. Save a baseline before you start and diff against it
 after:
@@ -227,6 +258,10 @@ node tools/audit.mjs <url> --baseline before.json
 The delta is how you show someone what the pass did. Without it, a page whose
 rhythm improved looks unchanged, and the only honest answer to "did anything
 change?" is a shrug.
+
+`example/erp/before.html` and `after.html` are the same purchase-order screen,
+21 findings down to none, with every word of its data intact — the dense
+equivalent of the pair below.
 
 `example/fix-me/before.html` and `after.html` are the same page with these
 rules applied to the second one — same markup, same copy, same identity, five

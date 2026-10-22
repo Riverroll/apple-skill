@@ -23,6 +23,10 @@ const URL_ = args.find((a) => !a.startsWith("--")) || "http://localhost:3000";
 const flag = (name) => { const i = args.indexOf("--" + name); return i === -1 ? null : args[i + 1]; };
 const JSON_OUT = flag("json");
 const BASELINE = flag("baseline");
+// A dense tool and a marketing page are scored against different numbers.
+// --mode erp forces the tool's set; --mode page forces the marketing set;
+// omitted, it detects and says which it used.
+const MODE = flag("mode");
 const CHROME = process.env.CHROME ||
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
@@ -99,7 +103,7 @@ function probeFn() {
     display: [],        // every element carrying display-size text
     headlines: [],      // h1..h3 text, for the voice check
     contrast: [],
-    stickyBlocked: [], stickyOk: 0,
+    stickyBlocked: [], stickyScoped: [], stickyOk: 0,
     pxRhythm: [],
     dimmed: [],
     nodes: 0,
@@ -131,8 +135,13 @@ function probeFn() {
     if (ownsText) {
       const c = rgba(cs.color);
       if (c && c.a > 0.05) {
-        bump(out.inks, key(cs.color));
-        note(out.inksWhere, key(cs.color), pathOf(el));
+        // A status badge is meaning, not an ink step — a tool needs a semantic
+        // set and it should not be charged against the three inks. Its
+        // contrast is still checked below, where it matters more.
+        if (!el.closest('[data-status], [role="status"], .badge, .status')) {
+          bump(out.inks, key(cs.color));
+          note(out.inksWhere, key(cs.color), pathOf(el));
+        }
         const a = lum(c), b = lum(bgBehind(el));
         const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
         const size = parseFloat(cs.fontSize);
@@ -196,15 +205,27 @@ function probeFn() {
     }
 
     if (cs.position === "sticky") {
-      let p = el.parentElement, blocker = null;
+      // Only overflow hidden/clip makes sticky inert. A *scrollable* ancestor
+      // is the sticky element's scrollport — that is exactly how a sticky
+      // table header works, and calling it broken is how a correct grid gets
+      // "fixed" into a broken one. A scroll container around a section that
+      // was meant to pin to the viewport is a real but different problem, so
+      // it is noted at low weight rather than failed.
+      let p = el.parentElement, clipped = null, scoped = null;
       while (p && p !== document.documentElement) {
         const pc = getComputedStyle(p);
-        if (["hidden", "auto", "scroll", "clip"].includes(pc.overflowY) ||
-            ["hidden", "clip"].includes(pc.overflowX)) { blocker = nameOf(p); break; }
+        if (["hidden", "clip"].includes(pc.overflowY) || ["hidden", "clip"].includes(pc.overflowX)) {
+          clipped = nameOf(p); break;
+        }
+        if (!scoped && p !== document.body && ["auto", "scroll"].includes(pc.overflowY)) scoped = nameOf(p);
         p = p.parentElement;
       }
-      if (blocker) out.stickyBlocked.push(nameOf(el) + "  <-- clipped by  " + blocker);
-      else out.stickyOk++;
+      if (clipped) out.stickyBlocked.push(nameOf(el) + "  <-- clipped by  " + clipped);
+      else {
+        out.stickyOk++;
+        if (scoped && !/^(TH|TD|TR|THEAD)$/.test(el.tagName))
+          out.stickyScoped.push(nameOf(el) + "  sticks inside  " + scoped);
+      }
     }
   }
 
@@ -217,8 +238,196 @@ function probeFn() {
   return JSON.stringify(out);
 }
 
+// ------------------------------------------------------------- the erp probe
+// A second probe, run only at the widest width. A dense tool is a desktop
+// product: measuring its grid at 500px tells you about a layout nobody uses.
+// Kept separate from probeFn so the page-mode path is untouched.
+function probeErpFn() {
+  const out = {
+    tables: 0, rows: 0, rowH: {}, tableFonts: {},
+    headNotSticky: [], firstColNotSticky: [],
+    numMisaligned: [], numNotTabular: [], headerMisaligned: [],
+    doubleSep: [], smallTargets: [], truncated: [],
+    labelGaps: {}, focusVisible: false, outlineKilled: 0,
+    navDepth: 0, contentPad: {}, offGrid: {}, biggestType: 0,
+    statusHues: 0,
+  };
+  const bump = (o, k) => (o[k] = (o[k] || 0) + 1);
+  const cap = (a, v) => { if (a.length < 8 && a.indexOf(v) === -1) a.push(v); };
+  const nameOf = (el) => {
+    const cls = typeof el.className === "string" && el.className.trim()
+      ? "." + el.className.trim().split(/\s+/).slice(0, 2).join(".") : "";
+    return el.tagName.toLowerCase() + (el.id ? "#" + el.id : "") + cls;
+  };
+  const rect = (el) => el.getBoundingClientRect();
+  const shown = (el) => {
+    const cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden") return null;
+    const b = rect(el);
+    return b.width > 0 && b.height > 0 ? cs : null;
+  };
+  // "1.234,56"  "(2.300)"  "-17"  "88%"  "12,5 kg" — a cell the eye compares
+  // by magnitude rather than reads
+  const NUM = /^[\s(]*[-+]?(?:\d[\d.,\s]*)(?:%|[A-Za-z]{0,3})?\)?$/;
+  const numeric = (t) => {
+    const s = t.trim();
+    return s.length > 0 && s.length < 24 && /\d/.test(s) && NUM.test(s);
+  };
+
+  // ------------------------------------------------------------------ tables
+  for (const tbl of document.querySelectorAll('table, [role="grid"], [role="treegrid"]')) {
+    if (!shown(tbl)) continue;
+    out.tables++;
+    const heads = [...tbl.querySelectorAll('thead th, [role="columnheader"]')];
+    const rows = [...tbl.querySelectorAll('tbody tr, [role="row"]')].filter((r) => !r.querySelector("th") || r.querySelector("td"));
+    out.rows += rows.length;
+
+    if (heads.length) {
+      const hcs = getComputedStyle(heads[0]);
+      if (hcs.position !== "sticky" && rows.length > 8)
+        cap(out.headNotSticky, nameOf(tbl) + "  (" + rows.length + " rows, header scrolls away)");
+    }
+
+    // a table wider than the box it sits in loses the row's identity on a
+    // sideways scroll unless the identifying column is pinned
+    const holder = tbl.parentElement;
+    if (holder && tbl.scrollWidth > holder.clientWidth + 4) {
+      const firstCell = rows[0] && rows[0].children[0];
+      if (firstCell && getComputedStyle(firstCell).position !== "sticky")
+        cap(out.firstColNotSticky, nameOf(tbl) + "  (" + tbl.scrollWidth + "px in a " + holder.clientWidth + "px box)");
+    }
+
+    // column alignment, read off the first body row
+    const sample = rows.slice(0, 12);
+    const colAlign = [];
+    for (const r of sample) {
+      [...r.children].forEach((cell, i) => {
+        const cs = shown(cell);
+        if (!cs) return;
+        const t = cell.textContent || "";
+        if (!numeric(t)) return;
+        colAlign[i] = (colAlign[i] || 0) + 1;
+        if (cs.textAlign !== "right" && cs.textAlign !== "end")
+          cap(out.numMisaligned, nameOf(tbl) + " col " + (i + 1) + "  '" + t.trim().slice(0, 14) + "'  text-align: " + cs.textAlign);
+        if (!/tabular-nums|tabular/.test(cs.fontVariantNumeric))
+          cap(out.numNotTabular, nameOf(tbl) + " col " + (i + 1) + "  '" + t.trim().slice(0, 14) + "'");
+      });
+    }
+    heads.forEach((h, i) => {
+      if (!colAlign[i]) return;                       // not a numeric column
+      const hcs = shown(h);
+      if (hcs && hcs.textAlign !== "right" && hcs.textAlign !== "end")
+        cap(out.headerMisaligned, nameOf(tbl) + " col " + (i + 1) + "  '" + (h.textContent || "").trim().slice(0, 18) + "'  header " + hcs.textAlign + " over right-aligned numbers");
+    });
+
+    // row height and the type budget inside the grid
+    for (const r of rows.slice(0, 40)) {
+      const h = Math.round(rect(r).height);
+      if (h > 4) bump(out.rowH, h + "px");
+    }
+    for (const c of [...tbl.querySelectorAll("td, th")].slice(0, 120)) {
+      const cs = shown(c);
+      if (cs) bump(out.tableFonts, Math.round(parseFloat(cs.fontSize)) + "px");
+    }
+
+    // striping and borders are two grids drawn on top of each other
+    if (rows.length > 2) {
+      const bgOf = (r) => {
+        const c = r.children[0];
+        const v = c ? getComputedStyle(c).backgroundColor : "";
+        return v && v !== "rgba(0, 0, 0, 0)" ? v : getComputedStyle(r).backgroundColor;
+      };
+      const striped = bgOf(rows[0]) !== bgOf(rows[1]);
+      const cell = rows[1].children[0];
+      const bordered = cell && (parseFloat(getComputedStyle(cell).borderTopWidth) > 0 ||
+                                parseFloat(getComputedStyle(rows[1]).borderTopWidth) > 0);
+      if (striped && bordered) cap(out.doubleSep, nameOf(tbl) + "  (zebra stripes and row borders)");
+    }
+  }
+
+  // ------------------------------------------------- targets, truncation, type
+  const INTERACTIVE = 'button, a, input, select, textarea, summary, [role="button"], [role="tab"], [role="checkbox"], [tabindex]:not([tabindex="-1"])';
+  for (const el of document.querySelectorAll(INTERACTIVE)) {
+    const cs = shown(el);
+    if (!cs) continue;
+    if (cs.display === "inline") continue;            // a link inside a sentence is not a target
+    const h = rect(el).height, w = rect(el).width;
+    if (h > 0 && h < 28 && w > 0) cap(out.smallTargets, nameOf(el) + "  " + Math.round(w) + "×" + Math.round(h));
+    if (cs.outlineStyle === "none" && !/inset/.test(cs.boxShadow)) out.outlineKilled++;
+  }
+
+  for (const el of document.querySelectorAll("body *")) {
+    const cs = shown(el);
+    if (!cs) continue;
+    if (cs.textOverflow === "ellipsis" && el.scrollWidth > el.clientWidth + 1 &&
+        !el.title && !el.getAttribute("aria-label") && !el.querySelector("[title]"))
+      cap(out.truncated, nameOf(el) + "  '" + (el.textContent || "").trim().slice(0, 20) + "…'  no title attribute");
+
+    const ownsText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+    if (ownsText) {
+      const s = parseFloat(cs.fontSize);
+      if (s > out.biggestType) out.biggestType = Math.round(s);
+    }
+  }
+
+  // ------------------------------------------------------------------- forms
+  for (const lab of document.querySelectorAll("label")) {
+    const cs = shown(lab);
+    if (!cs) continue;
+    let ctrl = lab.control || null;
+    if (!ctrl) {
+      const n = lab.nextElementSibling;
+      if (n && /^(INPUT|SELECT|TEXTAREA)$/.test(n.tagName)) ctrl = n;
+      else if (lab.parentElement) ctrl = lab.parentElement.querySelector("input, select, textarea");
+    }
+    if (!ctrl || !shown(ctrl)) continue;
+    const gap = Math.round(rect(ctrl).top - rect(lab).bottom);
+    if (gap >= 0 && gap < 60) bump(out.labelGaps, gap + "px");
+  }
+
+  // ------------------------------------------------- focus, nav depth, gutters
+  try {
+    for (const sheet of document.styleSheets) {
+      let rules = null;
+      try { rules = sheet.cssRules; } catch (e) { continue; }
+      for (const r of rules) {
+        if (r.cssText && r.cssText.indexOf(":focus-visible") !== -1) { out.focusVisible = true; break; }
+      }
+      if (out.focusVisible) break;
+    }
+  } catch (e) { /* cross-origin stylesheet */ }
+
+  for (const li of document.querySelectorAll("nav li")) {
+    let depth = 0;
+    for (let n = li; n; n = n.parentElement) if (n.tagName === "LI") depth++;
+    if (depth > out.navDepth) out.navDepth = depth;
+  }
+
+  for (const el of document.querySelectorAll('main, [role="main"], .content, .page, .view')) {
+    const cs = shown(el);
+    if (!cs) continue;
+    const p = Math.round(Math.max(parseFloat(cs.paddingLeft), parseFloat(cs.paddingTop)));
+    if (p > 0) bump(out.contentPad, p + "px");
+  }
+
+  // the 4px grid — every spacing value in a dense screen lands on it
+  const scope = document.querySelector('main, [role="main"]') || document.body;
+  for (const el of scope.querySelectorAll("*")) {
+    const cs = shown(el);
+    if (!cs) continue;
+    for (const v of [cs.paddingTop, cs.paddingLeft, cs.marginBottom, cs.rowGap, cs.columnGap]) {
+      const n = parseFloat(v);
+      if (!n || n < 4 || n > 64 || /%/.test(v)) continue;   // 1-3px is a hairline, not spacing
+      if (Math.abs(n - Math.round(n)) > 0.01) continue;   // sub-pixel from a flex calc
+      if (Math.round(n) % 4 !== 0) bump(out.offGrid, Math.round(n) + "px");
+    }
+  }
+
+  return JSON.stringify(out);
+}
+
 // ------------------------------------------------------------------ driver
-export async function runAudit(url, widths = WIDTHS) {
+export async function runAudit(url, widths = WIDTHS, mode = null) {
 const prof = fs.mkdtempSync(os.tmpdir() + "/audit-");
 const port = 9200 + Math.floor(Math.random() * 300);
 const chrome = spawn(CHROME, ["--headless=new", "--no-sandbox", "--hide-scrollbars",
@@ -257,15 +466,34 @@ const measure = async (width) => {
   })()`, awaitPromise: true });
   await sleep(800);
   const r = await call("Runtime.evaluate", { expression: `(${probeFn.toString()})()`, returnByValue: true });
-  if (r.exceptionDetails) { console.error(r.exceptionDetails.text); process.exit(1); }
-  return JSON.parse(r.result.value);
+  if (r.exceptionDetails) { console.error(r.exceptionDetails.text); throw new Error(r.exceptionDetails.text); }
+  const page = JSON.parse(r.result.value);
+  if (width === widths[0]) {
+    const e = await call("Runtime.evaluate", { expression: `(${probeErpFn.toString()})()`, returnByValue: true });
+    if (e.exceptionDetails) { console.error(e.exceptionDetails.text); throw new Error(e.exceptionDetails.text); }
+    page.erp = JSON.parse(e.result.value);
+  }
+  return page;
 };
 
 const byWidth = {};
-for (const w of widths) byWidth[w] = await measure(w);
-ws.close(); chrome.kill(); try { fs.rmSync(prof, { recursive: true, force: true }); } catch {}
+try {
+  for (const w of widths) byWidth[w] = await measure(w);
+} finally {
+  // a leaked headless Chrome survives the process and holds a core at 50%,
+  // so the teardown runs whether the probe succeeded or threw
+  ws.close(); chrome.kill(); try { fs.rmSync(prof, { recursive: true, force: true }); } catch {}
+}
 
 const d = byWidth[widths[0]];
+const e = d.erp || {};
+
+// A dense tool is a different product with different numbers. Guessing is
+// cheap and checkable: a real grid, or an aria grid role, or more rows than a
+// marketing page would ever print.
+const looksDense = (e.tables > 0 && e.rows >= 10) || e.rows >= 10 ||
+  (e.tables > 0 && (e.headNotSticky.length || e.numMisaligned.length));
+const useErp = mode === "erp" || (mode === null && looksDense);
 
 // ---------------------------------------------------------------- findings
 const top = (o, n = 8) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, n);
@@ -278,10 +506,12 @@ const radii = Object.entries(d.radii).filter(([, n]) => n >= 3);
 const pads = Object.keys(d.sectionPad).length;
 const durs = Object.entries(d.durations).filter(([, n]) => n >= 3);
 
-if (hues.length > 2)
+if (hues.length > (useErp ? 5 : 2))
   add(10, `${hues.length} accent hues in use`,
       hues.map(([h, n]) => `${h}° ×${n}`).join("  "),
-      "Apple ships one. Pick the hue that already means 'action' on this page and map the rest to ink steps. Almost always the single most visible change.",
+      useErp
+        ? "A tool gets one action colour plus four semantic ones — success, warning, critical, neutral. Five is the ceiling and status is the only thing allowed to use them. A hue per module or per document type is still the rainbow mistake. See references/erp.md."
+        : "Apple ships one. Pick the hue that already means 'action' on this page and map the rest to ink steps. Almost always the single most visible change.",
       hues.flatMap(([h]) => (d.chromaWhere[h] || []).slice(0, 1).map((p) => `${h}°  ${p}`)));
 
 if (inks > 7)
@@ -320,18 +550,18 @@ for (const e of d.display) {
     scaled.push(`${e.path}  ${e.size}px -> ${p.size}px, tracking stayed ${e.track}`);
   if (p.size === e.size && e.size >= 40) frozen.push(`${e.path}  ${e.size}px at every width`);
 }
-if (scaled.length)
+if (!useErp && scaled.length)
   add(6, `${scaled.length} headline(s) scaled on phone instead of re-picked`,
       "the size changed but the tracking did not follow it",
       "Each size has its own tracking: 64px -> 40px means -0.009em -> 0em, not -0.009em at a smaller size.",
       scaled.slice(0, 4));
-if (frozen.length)
+if (!useErp && frozen.length)
   add(5, `${frozen.length} large headline(s) never step down on phone`,
       "",
       "66 of Apple's 106 type classes change at a breakpoint. A 48px headline on a 500px viewport is two words per line.",
       frozen.slice(0, 4));
 
-if (pads > 3)
+if (!useErp && pads > 3)
   add(6, `${pads} different section paddings`,
       top(d.sectionPad, 8).map(([p, n]) => `${p} ×${n}`).join("  "),
       "Collapse onto one value from the ladder (80 or 100 desktop, ~60 phone). Varying it ad hoc is what makes a page feel loose.");
@@ -347,6 +577,12 @@ if (d.stickyBlocked.length)
       "Move the overflow:hidden onto the decorative layer that needs it, not the section.",
       d.stickyBlocked);
 
+if (!useErp && (d.stickyScoped || []).length)
+  add(3, `${d.stickyScoped.length} sticky element(s) stick to a scroll container, not the viewport`,
+      "an ancestor scrolls, so the element pins inside that box instead of the page",
+      "Fine for a table header — that is the intent. Wrong for a section meant to pin while the page scrolls past it: move the scroll container off the ancestor chain.",
+      d.stickyScoped.slice(0, 4));
+
 if (d.dimmed.length)
   add(7, `${d.dimmed.length} text element(s) sitting under a stuck opacity`,
       "every ink step inside them is multiplied by it",
@@ -360,7 +596,7 @@ if (d.contrast.length)
       d.contrast.slice(0, 4).map((c) => `${c.ratio}:1  ${c.where}`));
 
 // voice
-if (d.headlines.length >= 3) {
+if (!useErp && d.headlines.length >= 3) {
   const words = d.headlines.map((h) => h.split(/\s+/).length).sort((a, b) => a - b);
   const median = words[Math.floor(words.length / 2)];
   const stops = d.headlines.filter((h) => /[.!?]$/.test(h)).length / d.headlines.length;
@@ -372,10 +608,119 @@ if (d.headlines.length >= 3) {
 }
 
 const pxGaps = new Set(d.pxRhythm);
-if (pxGaps.size > 6)
+if (!useErp && pxGaps.size > 6)
   add(4, `${pxGaps.size} different px gaps between stacked text elements`,
       [...pxGaps].sort((a, b) => a - b).slice(0, 12).join(", ") + "px",
       "The em ladder (0.4 / 0.8 / 1.6) replaces these so spacing scales with the type it follows. Lowest-visibility fix on this list — do it after the ones above.");
+
+
+// ----------------------------------------------------------- dense-tool mode
+// Different product, different numbers. A grid is scanned, not read: what
+// breaks it is alignment, a header that scrolls away, and a row height nobody
+// agreed on. See references/erp.md for where each number comes from.
+if (useErp) {
+  const topE = (o, n = 8) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, n);
+
+  if (e.headNotSticky.length)
+    add(10, `${e.headNotSticky.length} table(s) whose header scrolls away`,
+        "the column names leave the viewport while the rows keep going",
+        "thead th { position: sticky; top: 0; z-index: 2 } with an opaque background. In a 400-row grid the reader otherwise scrolls back up to remember which column they are in, twice a minute.",
+        e.headNotSticky);
+
+  if (e.firstColNotSticky.length)
+    add(9, `${e.firstColNotSticky.length} table(s) scroll sideways with no pinned identity column`,
+        "once the first column is off-screen the rows are anonymous numbers",
+        "Pin it: td:first-child { position: sticky; left: 0 }. Let the description column be the one that gives way, never the identifier.",
+        e.firstColNotSticky);
+
+  if (e.numMisaligned.length)
+    add(9, `${e.numMisaligned.length} numeric cell group(s) not right-aligned`,
+        "numbers are compared by magnitude, which only works when the places line up",
+        ".num { text-align: right } — alignment follows the data type, not the layout. Text left, numbers right, and the header matches its column.",
+        e.numMisaligned);
+
+  if (e.headerMisaligned.length)
+    add(8, `${e.headerMisaligned.length} column header(s) not aligned to their own column`,
+        "a left-aligned header sitting over right-aligned numbers",
+        "The header is part of the column. Give it the column's alignment and the eye stops hunting for which number belongs to which name.",
+        e.headerMisaligned);
+
+  if (e.numNotTabular.length)
+    add(8, `${e.numNotTabular.length} numeric cell group(s) without tabular-nums`,
+        "proportional digits make 1,111 narrower than 8,888, so the column has a jagged edge",
+        "font-variant-numeric: tabular-nums. One declaration, and two rows become comparable at a glance. Mandatory anywhere a number sits under another number.",
+        e.numNotTabular);
+
+  if (e.smallTargets.length)
+    add(7, `${e.smallTargets.length} interactive element(s) under 28px tall`,
+        e.smallTargets.slice(0, 3).join("   "),
+        "28px is the dense-desktop floor (44 is the touch figure and would blow the density budget). Give the control the full row height and centre the icon inside it — a 16px icon button in a 40px row is a 16px target with 24px of wasted padding.",
+        e.smallTargets);
+
+  if (!e.focusVisible)
+    add(7, "no :focus-visible rule anywhere in the stylesheets",
+        `${e.outlineKilled} interactive element(s) currently paint no outline`,
+        "A tool is operated by keyboard by anyone who uses it all day. :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }. If the reset removes outlines, the replacement goes in the same commit.");
+
+  const rowHs = Object.entries(e.rowH).filter(([, n]) => n >= 2);
+  if (rowHs.length > 3)
+    add(6, `${rowHs.length} different row heights`,
+        topE(e.rowH).map(([h, n]) => `${h} ×${n}`).join("  "),
+        "Derive the whole grid from one token: --row-h of 32 / 40 / 48. Cell, field, button and toolbar heights all come off it, which is also what makes two different modules line up.",
+        rowHs.slice(0, 4).map(([h, n]) => `${h} on ${n} rows`));
+
+  const fatPad = Object.entries(e.contentPad).filter(([k]) => parseInt(k) >= 48);
+  if (fatPad.length)
+    add(6, "the content gutter is marketing-sized",
+        fatPad.map(([k, n]) => `${k} ×${n}`).join("  "),
+        "16–24px in a dense tool. The 80–100px section ladder is for a page read once; here it costs rows. Space belongs in 24px blocks between field groups, not added to every edge.");
+
+  if (e.biggestType > 32)
+    add(6, `the largest type on screen is ${e.biggestType}px`,
+        "a page title, not a headline",
+        "28px is the ceiling for a view title and 20px is often right. A 48px headline above a data grid spends a row of screen on a word the user already knew.");
+
+  const tFonts = Object.entries(e.tableFonts).filter(([, n]) => n >= 3);
+  if (tFonts.length > 3)
+    add(5, `${tFonts.length} font sizes inside the grid`,
+        topE(e.tableFonts).map(([f, n]) => `${f} ×${n}`).join("  "),
+        "Three: 14px values, 14px semibold headers, 12px ids and units. A fourth size is a decision nobody made.");
+
+  if (e.doubleSep.length)
+    add(5, `${e.doubleSep.length} table(s) separating rows twice`,
+        "zebra striping and row borders at the same time",
+        "Pick one. Two grids drawn on top of each other is why a table can look busy while containing nothing. Apple's own tables use a hairline between rows and no vertical rules at all.",
+        e.doubleSep);
+
+  if (e.truncated.length)
+    add(5, `${e.truncated.length} truncated element(s) with no way to see the rest`,
+        "text-overflow: ellipsis and no title attribute",
+        "An ellipsis with nothing behind it is data loss presented as design. Carry the full value in title, and give the identifier column a min-width so the description is the thing that gives way.",
+        e.truncated);
+
+  const gaps = Object.entries(e.labelGaps);
+  if (gaps.length > 2)
+    add(4, `${gaps.length} different label-to-field gaps`,
+        topE(e.labelGaps).map(([g, n]) => `${g} ×${n}`).join("  "),
+        "8px, once, everywhere. The form reads as one grid instead of forty independent decisions.");
+
+  const off = Object.entries(e.offGrid).filter(([, n]) => n >= 3);
+  if (off.length > 2)
+    add(4, `${off.length} spacing values off the 4px grid`,
+        topE(e.offGrid).map(([v, n]) => `${v} ×${n}`).join("  "),
+        "A dense screen uses 4 / 8 / 12 / 16 / 24 / 32 and nothing else. 10px, 14px and 18px are the values that make a tool feel assembled rather than designed.");
+
+  if (e.navDepth > 2)
+    add(3, `the navigation tree nests ${e.navDepth} levels deep`,
+        "",
+        "One level plus a search field over the whole menu. A five-level ERP menu is a sitemap standing in for an information architecture nobody decided.");
+
+  const slow = Object.entries(d.durations).filter(([t]) => parseInt(t) > 250);
+  if (slow.length)
+    add(3, `${slow.length} transition(s) longer than 250ms`,
+        slow.map(([t, n]) => `${t} ×${n}`).join("  "),
+        "In a tool: 80ms hover, 150ms state, 200ms for a panel. Anything performed hundreds of times a day animates in 0ms — charming once, an obstacle the three-hundredth time.");
+}
 
 findings.sort((a, b) => b.weight - a.weight);
 
@@ -384,8 +729,22 @@ const summary = {
   url, when: new Date().toISOString(),
   hues: hues.length, inks, radii: radii.length, pads, durs: durs.length,
   strayNormal: strayNormal.length, scaled: scaled.length, frozen: frozen.length,
-  stickyBlocked: d.stickyBlocked.length, stickyOk: d.stickyOk,
+  stickyBlocked: d.stickyBlocked.length, stickyScoped: (d.stickyScoped || []).length, stickyOk: d.stickyOk,
   contrastFails: d.contrast.length, dimmed: d.dimmed.length, nodes: d.nodes,
+  mode: useErp ? "erp" : "page", dense: !!looksDense,
+  tables: e.tables || 0, rows: e.rows || 0,
+  headNotSticky: (e.headNotSticky || []).length,
+  firstColNotSticky: (e.firstColNotSticky || []).length,
+  numMisaligned: (e.numMisaligned || []).length,
+  numNotTabular: (e.numNotTabular || []).length,
+  headerMisaligned: (e.headerMisaligned || []).length,
+  smallTargets: (e.smallTargets || []).length,
+  focusVisible: !!e.focusVisible,
+  rowHeights: Object.keys(e.rowH || {}).length,
+  doubleSep: (e.doubleSep || []).length,
+  truncated: (e.truncated || []).length,
+  offGrid: Object.keys(e.offGrid || {}).length,
+  biggestType: e.biggestType || 0,
 };
 
   return { summary, findings, byWidth };
@@ -395,10 +754,21 @@ const summary = {
 function report(url, { summary, findings, byWidth }, widths = WIDTHS) {
   const d = byWidth[widths[0]];
   console.log(`\n  apple-design audit — ${url}`);
-  console.log(`  measured at ${widths.join(" / ")}px · ${d.nodes} painted elements · ${d.stickyOk} working sticky element(s)\n`);
+  console.log(`  measured at ${widths.join(" / ")}px · ${d.nodes} painted elements · ${d.stickyOk} working sticky element(s)`);
+  if (summary.mode === "erp")
+    console.log(`  dense-tool mode · ${summary.tables} table(s), ${summary.rows} rows · the marketing padding, headline and parallax checks are off`);
+  else if (summary.dense)
+    console.log(`  scored as a marketing page, but this looks like a tool — re-run with --mode erp`);
+  console.log("");
   if (!findings.length) {
-    console.log("  Nothing countable is off. What is left is judgement: voice, art");
-    console.log("  direction, and whether the page has one idea per section.\n");
+    if (summary.mode === "erp") {
+      console.log("  Nothing countable is off. What is left is judgement: whether the");
+      console.log("  columns are the ones the job needs, whether the four grid states");
+      console.log("  exist, and whether the whole task can be done from the keyboard.\n");
+    } else {
+      console.log("  Nothing countable is off. What is left is judgement: voice, art");
+      console.log("  direction, and whether the page has one idea per section.\n");
+    }
     return;
   }
   findings.forEach((f, i) => {
@@ -407,8 +777,14 @@ function report(url, { summary, findings, byWidth }, widths = WIDTHS) {
     for (const w of (f.where || []).slice(0, 4)) console.log(`       · ${w}`);
     console.log(`     -> ${f.fix}\n`);
   });
-  console.log("  Work top-down. The first two are what someone notices;");
-  console.log("  rhythm and motion below them are what they feel.\n");
+  if (summary.mode === "erp") {
+    console.log("  Work top-down. Alignment and the sticky header are what makes the");
+    console.log("  grid readable; the density tokens below them are what makes two");
+    console.log("  modules look like one product.\n");
+  } else {
+    console.log("  Work top-down. The first two are what someone notices;");
+    console.log("  rhythm and motion below them are what they feel.\n");
+  }
 }
 
 function reportDelta(was, now) {
@@ -416,8 +792,14 @@ function reportDelta(was, now) {
     hues: "accent hues", inks: "text colours", radii: "corner radii",
     pads: "section paddings", durs: "durations", strayNormal: "sizes tracked normal",
     scaled: "headlines scaled not re-picked", frozen: "headlines frozen on phone",
-    stickyBlocked: "sticky blocked", contrastFails: "below AA",
+    stickyBlocked: "sticky blocked", stickyScoped: "sticky scoped to a container", contrastFails: "below AA",
     dimmed: "text under a stuck opacity",
+    headNotSticky: "tables with a scrolling header", firstColNotSticky: "tables with no pinned column",
+    numMisaligned: "numeric cells not right-aligned", numNotTabular: "numeric cells not tabular",
+    headerMisaligned: "headers misaligned to their column", smallTargets: "targets under 28px",
+    rowHeights: "row heights", doubleSep: "tables separated twice",
+    truncated: "truncations with no title", offGrid: "spacings off the 4px grid",
+    biggestType: "largest type on screen",
   };
   console.log("  change since baseline\n");
   let moved = false;
@@ -431,7 +813,7 @@ function reportDelta(was, now) {
 }
 
 if (isCli) {
-  const result = await runAudit(URL_);
+  const result = await runAudit(URL_, WIDTHS, MODE);
   if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify({ summary: result.summary, byWidth: result.byWidth }, null, 2));
   report(URL_, result);
   if (BASELINE) reportDelta(JSON.parse(fs.readFileSync(BASELINE, "utf8")).summary, result.summary);

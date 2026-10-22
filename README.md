@@ -132,6 +132,26 @@ fix, it is a different site.
 
 ## Scope
 
+## Tools are not pages
+
+An ERP, an admin panel or a dashboard shares the craft and almost none of the
+numbers. `references/erp.md` carries the dense set — the 12/14/17px ladder that
+was already in Apple's measured classes, one `--row-h` token the whole geometry
+comes off, the table and form contracts, the semantic colour set that is the
+one exemption to one accent, and why scroll-linked motion has no place in a
+data grid.
+
+```sh
+node tools/audit.mjs http://localhost:3000/purchase-orders --mode erp
+```
+
+In that mode the audit stops asking for an 80px padding ladder and starts
+flagging it, and adds the checks that decide whether a grid is readable:
+alignment by data type, a sticky header, a pinned identity column,
+`tabular-nums`, one row height, 28px hit targets, a focus ring, truncation with
+something behind it. `example/erp/` is the worked pair — the same purchase-order
+screen, 21 findings down to none, every word of its data intact.
+
 This teaches the *system* — proportion, rhythm, restraint, motion — so your own
 brand and assets come out looking considered. It deliberately ships none of
 Apple's content: no fonts, photography, product renders, icons or wordmarks,
@@ -161,6 +181,7 @@ values — computed styles in a real browser, compared to `assets/type-scale.jso
 node test/structure.mjs                 # the skill loads, refs resolve, no Apple assets
 node test/conformance.mjs <url>         # computed styles vs the measured values
 node test/restraint.mjs                 # the before/after pair, self-contained
+node test/erp.mjs                      # the dense-tool pair, self-contained
 ```
 
 105 checks: the restraint counts (one accent hue, at most seven text colours,
