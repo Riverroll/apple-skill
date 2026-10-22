@@ -219,6 +219,12 @@ The delta is how you show someone what the pass did. Without it, a page whose
 rhythm improved looks unchanged, and the only honest answer to "did anything
 change?" is a shrug.
 
+`example/fix-me/before.html` and `after.html` are the same page with these
+rules applied to the second one — same markup, same copy, same identity, five
+audit findings down to none. Read the diff before doing this to someone else's
+site; it is the shortest possible demonstration that restraint is a change of
+vocabulary, not of design.
+
 `assets/apple-base.css` is a starting point for a **new** page with no design of
 its own. Do not drop it onto an existing site — take the rhythm and motion
 sections from it and leave the palette behind.

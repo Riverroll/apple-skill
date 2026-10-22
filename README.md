@@ -105,6 +105,25 @@ feels like; the counts above are what it looks like. Fixing rhythm on a site
 that is already roughly spaced produces a diff full of real improvements and a
 page its owner says looks identical — and they are right.
 
+## The worked example
+
+`example/fix-me/before.html` and `example/fix-me/after.html` are the **same
+page** — same markup, same copy, same dark identity, same teal — with the
+restraint rules applied to the second one. Open both:
+
+```
+before   6 accent hues · 15 text colours · 5 display sizes tracked normal
+         · 4 section paddings · a headline frozen at every width
+after    nothing countable is off
+```
+
+Nothing was redesigned. The colour per card carried no meaning, so it became
+one card treatment; nine opacity steps became three ink steps; every display
+size got its tracking from the table; the padding collapsed onto one ladder.
+`node test/restraint.mjs` asserts all of that, and asserts that the copy is
+byte-identical between the two — a "fix" that rewrites the content is not a
+fix, it is a different site.
+
 ## Scope
 
 This teaches the *system* — proportion, rhythm, restraint, motion — so your own
@@ -135,6 +154,7 @@ values — computed styles in a real browser, compared to `assets/type-scale.jso
 ```sh
 node test/structure.mjs                 # the skill loads, refs resolve, no Apple assets
 node test/conformance.mjs <url>         # computed styles vs the measured values
+node test/restraint.mjs                 # the before/after pair, self-contained
 ```
 
 105 checks: the restraint counts (one accent hue, at most seven text colours,

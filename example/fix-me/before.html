@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signal Lab — before</title>
+<style>
+  /* A real-looking site that was never built on a system. Nothing here is
+     stupid on its own; every decision was reasonable in isolation. Together
+     they are what "unconsidered" looks like. */
+  :root {
+    --bg: #0b0f12;
+    --panel: #121a1f;
+    --teal: #2dd4bf; --violet: #a78bfa; --amber: #fbbf24;
+    --rose: #fb7185; --lime: #a3e635;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: #e8edf0;
+         font: 400 16px/1.6 "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 1080px; margin-inline: auto; padding-inline: 24px; }
+
+  .hero { padding: 120px 0 96px; text-align: center; }
+  .hero h1 { font-size: 44px; font-weight: 700; margin: 0 0 18px; }
+  .hero p  { font-size: 19px; color: rgba(255,255,255,0.72); margin: 0 0 28px; }
+  .cta a { display: inline-block; padding: 12px 22px; margin: 0 6px;
+           border-radius: 6px; text-decoration: none; font-weight: 700;
+           transition: all 320ms ease; }
+  .cta .primary   { background: var(--teal); color: #06231f; }
+  .cta .secondary { border: 1px solid var(--violet); color: var(--violet); }
+
+  .services { padding: 72px 0; }
+  .services h2 { font-size: 32px; font-weight: 700; margin: 0 0 8px; }
+  .services .eyebrow { color: var(--amber); font-size: 12px; letter-spacing: 0.3em;
+                       text-transform: uppercase; margin: 0 0 10px; }
+  .services .lede { color: rgba(255,255,255,0.6); margin: 0 0 34px; }
+  .grid { display: grid; gap: 18px; grid-template-columns: repeat(3, 1fr); }
+  .card { background: var(--panel); border-radius: 14px; padding: 26px;
+          border: 1px solid rgba(255,255,255,0.08); transition: all 240ms ease; }
+  .card:nth-child(1) { border-color: rgba(45,212,191,0.45); }
+  .card:nth-child(2) { border-color: rgba(167,139,250,0.45); }
+  .card:nth-child(3) { border-color: rgba(251,113,133,0.45); }
+  .card h3 { font-size: 21px; font-weight: 700; margin: 0 0 10px; }
+  .card p  { color: rgba(255,255,255,0.55); font-size: 15px; margin: 0 0 16px; }
+  .tag { display: inline-block; font-size: 11px; padding: 3px 9px; border-radius: 22px;
+         margin-right: 6px; transition: all 500ms ease; }
+  .card:nth-child(1) .tag { background: rgba(45,212,191,0.12);  color: var(--teal); }
+  .card:nth-child(2) .tag { background: rgba(167,139,250,0.12); color: var(--violet); }
+  .card:nth-child(3) .tag { background: rgba(251,113,133,0.12); color: var(--rose); }
+
+  .stats { padding: 56px 0; }
+  .stats .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+                background: var(--panel); border-radius: 10px; padding: 28px; }
+  .stats .n { font-size: 30px; font-weight: 700; color: var(--lime); }
+  .stats .l { font-size: 12px; color: rgba(255,255,255,0.38); }
+
+  .closing { padding: 96px 0 120px; text-align: center; }
+  .closing h2 { font-size: 36px; font-weight: 700; margin: 0 0 14px; }
+  .closing p { color: rgba(255,255,255,0.45); margin: 0 0 24px; }
+  .closing a { display: inline-block; padding: 14px 26px; border-radius: 999px;
+               background: var(--amber); color: #2a1c00; text-decoration: none;
+               font-weight: 700; transition: all 700ms ease; }
+
+  footer { padding: 40px 0; border-top: 1px solid rgba(255,255,255,0.06);
+           color: rgba(255,255,255,0.3); font-size: 13px; }
+  footer a { color: rgba(255,255,255,0.5); text-decoration: none; transition: all 180ms ease; }
+</style>
+</head>
+<body>
+<main>
+  <section class="hero"><div class="wrap">
+    <h1>Instrumentation for hardware teams.</h1>
+    <p>Signal Lab designs the tools that sit between a sensor and a decision.</p>
+    <div class="cta">
+      <a class="primary" href="#">Start a project</a>
+      <a class="secondary" href="#">See our work</a>
+    </div>
+  </div></section>
+
+  <section class="services"><div class="wrap">
+    <p class="eyebrow">What we do</p>
+    <h2>Three things, done properly.</h2>
+    <p class="lede">We take on a small number of engagements each year.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Telemetry pipelines.</h3>
+        <p>Ingest, buffer and replay device streams without losing a sample.</p>
+        <span class="tag">Firmware</span><span class="tag">Backend</span>
+      </div>
+      <div class="card">
+        <h3>Operator interfaces.</h3>
+        <p>Dense control surfaces that a technician can read at a glance.</p>
+        <span class="tag">Frontend</span><span class="tag">Design</span>
+      </div>
+      <div class="card">
+        <h3>Field diagnostics.</h3>
+        <p>Tools that explain a failure while the unit is still on the bench.</p>
+        <span class="tag">Tooling</span><span class="tag">Support</span>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="stats"><div class="wrap"><div class="row">
+    <div><div class="n">11</div><div class="l">Years running</div></div>
+    <div><div class="n">38</div><div class="l">Systems shipped</div></div>
+    <div><div class="n">6</div><div class="l">Engineers</div></div>
+    <div><div class="n">4</div><div class="l">Open slots</div></div>
+  </div></div></section>
+
+  <section class="closing"><div class="wrap">
+    <h2>Tell us what is breaking.</h2>
+    <p>One call, no deck. We will say honestly whether we are the right shop.</p>
+    <a href="#">Book a call</a>
+  </div></section>
+</main>
+<footer><div class="wrap">Signal Lab · <a href="#">hello@example.com</a></div></footer>
+</body>
+</html>

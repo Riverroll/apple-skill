@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signal Lab — after</title>
+<style>
+  /* Same site. Same copy, same markup, same dark identity, same teal.
+     What changed is the vocabulary: one accent instead of five, three ink
+     steps instead of nine, tracking picked per size, one padding ladder,
+     three durations. Nothing here is a redesign. */
+  :root {
+    --surface: #0b0f12;
+    --surface-alt: #121a1f;           /* a near neighbour, not a second theme */
+    --ink: #e8edf0;                   /* primary */
+    --ink-secondary: rgba(232,237,240,0.66);
+    --ink-muted: rgba(232,237,240,0.42);
+    --accent: #2dd4bf;                /* the one that already meant "action" */
+    --on-accent: #06231f;
+
+    --radius-pill: 980px;
+    --radius-card: 18px;
+    --radius-tile: 10px;
+
+    --section-padding: 80px;
+    --ease-out-soft: cubic-bezier(0, 0, 0.5, 1);
+  }
+  @media (max-width: 734px) { :root { --section-padding: 60px; } }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface); color: var(--ink);
+         font: 400 17px/1.4705882353 "Helvetica Neue", Helvetica, Arial, sans-serif;
+         letter-spacing: -0.022em; }
+  .wrap { max-width: 1068px; margin-inline: auto; padding-inline: 22px; }
+
+  /* type: every size takes its own tracking from the measured table */
+  /* longhand on purpose: the `font:` shorthand needs a family, and passing
+     `inherit` there silently invalidates the whole declaration */
+  h1 { font-size: 48px; line-height: 1.0834933333; font-weight: 600; letter-spacing: -0.003em; margin: 0; }
+  h2 { font-size: 40px; line-height: 1.1; font-weight: 600; letter-spacing: 0em; margin: 0; }
+  h3 { font-size: 24px; line-height: 1.1666666667; font-weight: 600; letter-spacing: 0.009em; margin: 0; }
+  .lede, .hero p { font-size: 21px; line-height: 1.381002381; letter-spacing: 0.011em;
+                   color: var(--ink-secondary); margin: 0; }
+  .eyebrow { font-size: 12px; line-height: 1.3333733333; letter-spacing: 0.3em;
+             text-transform: uppercase; color: var(--ink-muted); margin: 0; }
+  .small { font-size: 14px; line-height: 1.4285914286; letter-spacing: -0.016em;
+           color: var(--ink-secondary); margin: 0; }
+  /* re-picked on phone, not scaled — the tracking follows the new size */
+  @media (max-width: 734px) {
+    h1 { font-size: 40px; line-height: 1.1; letter-spacing: 0em; }
+    h2 { font-size: 32px; letter-spacing: 0.004em; }
+    h3 { font-size: 21px; letter-spacing: 0.011em; }
+  }
+
+  /* rhythm: em of the element the margin sits on */
+  .eyebrow + h2 { margin-top: 0.4em; }
+  h1 + p, h2 + .lede, h3 + p { margin-top: 0.8em; }
+  .lede + .grid, p + .cta, .lede + .row { margin-top: 1.6em; }
+
+  section { padding: var(--section-padding) 0; }
+  /* heroes take the large end of the ladder — still the ladder */
+  .hero, .closing { padding: 120px 0; }
+  @media (max-width: 734px) { .hero, .closing { padding: 80px 0; } }
+  .hero { text-align: center; }
+  .closing { text-align: center; }
+
+  .cta a { display: inline-block; padding: 12px 22px; margin: 0 6px;
+           border-radius: var(--radius-pill); text-decoration: none;
+           font-size: 17px; font-weight: 400; letter-spacing: -0.022em;
+           border: 1px solid transparent;
+           transition: background 100ms var(--ease-out-soft),
+                       border-color 100ms var(--ease-out-soft); }
+  .cta .primary   { background: var(--accent); color: var(--on-accent); }
+  .cta .secondary { border-color: var(--accent); color: var(--accent); }
+  .cta .primary:hover   { background: color-mix(in srgb, var(--accent) 88%, #fff); }
+  .cta .secondary:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+
+  .grid { display: grid; gap: 20px; grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 1068px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 734px)  { .grid { grid-template-columns: 1fr; } }
+  /* one card treatment — the colour per card carried no meaning */
+  .card { background: var(--surface-alt); border-radius: var(--radius-card);
+          padding: 28px; border: 1px solid rgba(232,237,240,0.10);
+          transition: border-color 250ms var(--ease-out-soft); }
+  .card:hover { border-color: rgba(232,237,240,0.20); }
+  .card p { color: var(--ink-secondary); }
+  .tag { display: inline-block; font-size: 12px; letter-spacing: -0.01em;
+         padding: 4px 10px; border-radius: var(--radius-pill); margin-right: 6px;
+         background: rgba(232,237,240,0.06); color: var(--ink-muted); }
+  .tags { margin-top: 0.8em; }
+
+  .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+         background: var(--surface-alt); border-radius: var(--radius-card); padding: 28px; }
+  @media (max-width: 734px) { .row { grid-template-columns: repeat(2, 1fr); } }
+  .n { font-size: 32px; line-height: 1.125; font-weight: 600; letter-spacing: 0.004em; }
+  .l { font-size: 12px; letter-spacing: -0.01em; color: var(--ink-muted); margin-top: 0.4em; }
+
+  .closing a { display: inline-block; padding: 12px 22px; border-radius: var(--radius-pill);
+               background: var(--accent); color: var(--on-accent); text-decoration: none;
+               font-size: 17px; letter-spacing: -0.022em;
+               transition: background 100ms var(--ease-out-soft); }
+  .closing p { color: var(--ink-secondary); }
+
+  footer { padding: 40px 0; border-top: 1px solid rgba(232,237,240,0.08); }
+  footer, footer a { color: var(--ink-muted); font-size: 14px; letter-spacing: -0.016em; }
+  footer a { text-decoration: none; transition: color 100ms var(--ease-out-soft); }
+  footer a:hover { color: var(--ink); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <section class="hero"><div class="wrap">
+    <h1>Instrumentation for hardware teams.</h1>
+    <p>Signal Lab designs the tools that sit between a sensor and a decision.</p>
+    <div class="cta">
+      <a class="primary" href="#">Start a project</a>
+      <a class="secondary" href="#">See our work</a>
+    </div>
+  </div></section>
+
+  <section class="services"><div class="wrap">
+    <p class="eyebrow">What we do</p>
+    <h2>Three things, done properly.</h2>
+    <p class="lede">We take on a small number of engagements each year.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Telemetry pipelines.</h3>
+        <p>Ingest, buffer and replay device streams without losing a sample.</p>
+        <div class="tags"><span class="tag">Firmware</span><span class="tag">Backend</span></div>
+      </div>
+      <div class="card">
+        <h3>Operator interfaces.</h3>
+        <p>Dense control surfaces that a technician can read at a glance.</p>
+        <div class="tags"><span class="tag">Frontend</span><span class="tag">Design</span></div>
+      </div>
+      <div class="card">
+        <h3>Field diagnostics.</h3>
+        <p>Tools that explain a failure while the unit is still on the bench.</p>
+        <div class="tags"><span class="tag">Tooling</span><span class="tag">Support</span></div>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="stats"><div class="wrap"><div class="row">
+    <div><div class="n">11</div><div class="l">Years running</div></div>
+    <div><div class="n">38</div><div class="l">Systems shipped</div></div>
+    <div><div class="n">6</div><div class="l">Engineers</div></div>
+    <div><div class="n">4</div><div class="l">Open slots</div></div>
+  </div></div></section>
+
+  <section class="closing"><div class="wrap">
+    <h2>Tell us what is breaking.</h2>
+    <p>One call, no deck. We will say honestly whether we are the right shop.</p>
+    <p class="cta" style="margin-top:1.6em"><a href="#">Book a call</a></p>
+  </div></section>
+</main>
+<footer><div class="wrap"><span class="small">Signal Lab · <a href="#">hello@example.com</a></span></div></footer>
+</body>
+</html>

@@ -17,6 +17,7 @@
 // problem: showing someone what the work actually did.
 import fs from "node:fs"; import os from "node:os"; import { spawn } from "node:child_process";
 
+const isCli = import.meta.url === `file://${process.argv[1]}`;
 const args = process.argv.slice(2);
 const URL_ = args.find((a) => !a.startsWith("--")) || "http://localhost:3000";
 const flag = (name) => { const i = args.indexOf("--" + name); return i === -1 ? null : args[i + 1]; };
@@ -208,6 +209,7 @@ function probeFn() {
 }
 
 // ------------------------------------------------------------------ driver
+export async function runAudit(url, widths = WIDTHS) {
 const prof = fs.mkdtempSync(os.tmpdir() + "/audit-");
 const port = 9200 + Math.floor(Math.random() * 300);
 const chrome = spawn(CHROME, ["--headless=new", "--no-sandbox", "--hide-scrollbars",
@@ -230,7 +232,7 @@ await call("Runtime.enable"); await call("Page.enable");
 
 const measure = async (width) => {
   await call("Emulation.setDeviceMetricsOverride", { width, height: 900, deviceScaleFactor: 1, mobile: false });
-  await call("Page.navigate", { url: URL_ });
+  await call("Page.navigate", { url });
   await sleep(4500);
   // let anything scroll-triggered reveal itself before measuring
   await call("Runtime.evaluate", { expression: "window.scrollTo(0, document.body.scrollHeight); window.scrollTo(0, 0);" });
@@ -241,10 +243,10 @@ const measure = async (width) => {
 };
 
 const byWidth = {};
-for (const w of WIDTHS) byWidth[w] = await measure(w);
+for (const w of widths) byWidth[w] = await measure(w);
 ws.close(); chrome.kill(); try { fs.rmSync(prof, { recursive: true, force: true }); } catch {}
 
-const d = byWidth[1440];
+const d = byWidth[widths[0]];
 
 // ---------------------------------------------------------------- findings
 const top = (o, n = 8) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, n);
@@ -289,7 +291,7 @@ if (multiTrack.length)
       "One size, one tracking. Pick from the table and hold it.");
 
 // responsive: a headline is supposed to be re-picked on phone, not scaled
-const phone = byWidth[500];
+const phone = byWidth[widths[widths.length - 1]];
 const byPath = new Map(phone.display.map((e) => [e.path, e]));
 const scaled = [], frozen = [];
 for (const e of d.display) {
@@ -354,22 +356,26 @@ findings.sort((a, b) => b.weight - a.weight);
 
 // ------------------------------------------------------------------ output
 const summary = {
-  url: URL_, when: new Date().toISOString(),
+  url, when: new Date().toISOString(),
   hues: hues.length, inks, radii: radii.length, pads, durs: durs.length,
   strayNormal: strayNormal.length, scaled: scaled.length, frozen: frozen.length,
   stickyBlocked: d.stickyBlocked.length, stickyOk: d.stickyOk,
   contrastFails: d.contrast.length, nodes: d.nodes,
 };
 
-if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify({ summary, byWidth }, null, 2));
+  return { summary, findings, byWidth };
+}
 
-console.log(`\n  apple-design audit — ${URL_}`);
-console.log(`  measured at ${WIDTHS.join(" / ")}px · ${d.nodes} painted elements · ${d.stickyOk} working sticky element(s)\n`);
-
-if (!findings.length) {
-  console.log("  Nothing countable is off. What is left is judgement: voice, art");
-  console.log("  direction, and whether the page has one idea per section.\n");
-} else {
+// --------------------------------------------------------------------- cli
+function report(url, { summary, findings, byWidth }, widths = WIDTHS) {
+  const d = byWidth[widths[0]];
+  console.log(`\n  apple-design audit — ${url}`);
+  console.log(`  measured at ${widths.join(" / ")}px · ${d.nodes} painted elements · ${d.stickyOk} working sticky element(s)\n`);
+  if (!findings.length) {
+    console.log("  Nothing countable is off. What is left is judgement: voice, art");
+    console.log("  direction, and whether the page has one idea per section.\n");
+    return;
+  }
   findings.forEach((f, i) => {
     console.log(`  ${i + 1}. ${f.title}`);
     if (f.detail) console.log(`     ${f.detail}`);
@@ -380,8 +386,7 @@ if (!findings.length) {
   console.log("  rhythm and motion below them are what they feel.\n");
 }
 
-if (BASELINE) {
-  const was = JSON.parse(fs.readFileSync(BASELINE, "utf8")).summary;
+function reportDelta(was, now) {
   const labels = {
     hues: "accent hues", inks: "text colours", radii: "corner radii",
     pads: "section paddings", durs: "durations", strayNormal: "sizes tracked normal",
@@ -391,10 +396,17 @@ if (BASELINE) {
   console.log("  change since baseline\n");
   let moved = false;
   for (const k of Object.keys(labels)) {
-    const a = was[k] ?? 0, b = summary[k] ?? 0;
+    const a = was[k] ?? 0, b = now[k] ?? 0;
     if (a === b) continue;
     moved = true;
     console.log(`     ${labels[k].padEnd(34)} ${a} ${b < a ? "↓" : "↑"} ${b}`);
   }
   console.log(moved ? "" : "     nothing countable moved — if the page looks the same, it is the same\n");
+}
+
+if (isCli) {
+  const result = await runAudit(URL_);
+  if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify({ summary: result.summary, byWidth: result.byWidth }, null, 2));
+  report(URL_, result);
+  if (BASELINE) reportDelta(JSON.parse(fs.readFileSync(BASELINE, "utf8")).summary, result.summary);
 }
