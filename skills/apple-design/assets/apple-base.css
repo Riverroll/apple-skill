@@ -1,23 +1,38 @@
-/* Apple design system — base tokens and primitives.
-   Every value is measured from apple.com's shipped stylesheets.
-   Swap --accent and the font stacks for your own brand; the proportions,
-   rhythm and motion are what carry the quality. */
+/* Apple's design system — base tokens and primitives.
+   Every number is measured from apple.com's shipped stylesheets.
+
+   FOR A NEW PAGE ONLY. Do not drop this onto a site that already has a design:
+   it carries a placeholder identity and would overwrite theirs. For an existing
+   site, take the rhythm, type and motion blocks and leave the palette behind.
+
+   The palette block below is a PLACEHOLDER. Replace all of it. The proportions,
+   rhythm, tracking and motion are the system; the hex values are not. */
 
 :root {
   /* type stacks — substitute your own optical-size pair */
   --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-text:    "SF Pro Text", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
 
-  /* ink + surface */
-  --ink: #1d1d1f;
-  --ink-secondary: #6e6e73;
-  --ink-muted: #86868b;
-  --surface: #fff;
-  --surface-alt: #f5f5f7;
-  --accent: #0071e3;
+  /* ====== REPLACE THIS BLOCK WITH YOUR OWN COLOURS ======
+     These are Apple's, kept only so a blank page renders. What transfers is
+     the RELATIONSHIP, not the values:
+       - three clearly separated ink steps (primary / supporting / metadata)
+       - an alt surface that is a near neighbour of the base, barely a step
+       - one accent, readable on the surface and against --on-accent
+     Keep the names, change every value. */
+  --ink: #1d1d1f;            /* primary text */
+  --ink-secondary: #6e6e73;  /* supporting copy */
+  --ink-muted: #86868b;      /* captions, metadata */
+  --surface: #fff;           /* base background */
+  --surface-alt: #f5f5f7;    /* alternating section background */
+  --surface-inverse: #000;   /* full-bleed inverse section */
+  --ink-inverse: #f5f5f7;    /* text on the inverse section */
+  --accent: #0071e3;         /* the one action colour */
   --accent-hover: #0076df;
   --accent-active: #006edb;
+  --on-accent: #fff;         /* text on an accent fill — flip to dark if your accent is light */
   --link: #06c;
+  /* ====== end of replaceable block ====== */
 
   /* vertical rhythm, relative to the type it follows */
   --stacked-margin: 0.4em;
@@ -94,7 +109,7 @@ body {
 /* ---- layout ---- */
 .section { padding: var(--section-padding) var(--gutter); background: var(--surface); }
 .section--alt  { background: var(--surface-alt); }
-.section--dark { background: #000; color: #f5f5f7; }
+.section--dark { background: var(--surface-inverse); color: var(--ink-inverse); }
 .section--dark .t-body, .section--dark .t-intro { color: var(--ink-muted); }
 @media (max-width: 734px) { .section { --section-padding: 60px; } }
 
@@ -115,7 +130,7 @@ body {
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   text-align: center;
   text-decoration: none;
   cursor: pointer;
@@ -124,7 +139,7 @@ body {
 .button:hover  { background: var(--accent-hover); }
 .button:active { background: var(--accent-active); }
 .button--secondary { background: transparent; border-color: var(--accent); color: var(--accent); }
-.button--secondary:hover { background: rgba(0,113,227,0.06); }
+.button--secondary:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
 .cta-row { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; }
 
 /* ---- reveal ----
@@ -136,6 +151,20 @@ body {
   transition: opacity 400ms var(--ease-out-soft), transform 400ms var(--ease-out-soft);
 }
 .stagger-item { transition-delay: calc(min(var(--i, 0), 6) * 60ms); }
+
+/* ---- scroll-linked sections (see references/motion.md) ----
+   Pure sticky + a spacer: nothing runs per scroll event. Gated behind the
+   enhance-xp class so that without JS, or on a viewport too short or too tall
+   for the effect, the section is an ordinary stacked block. */
+:root { --enhanced-media-query: "(min-height: 500px) and (max-height: 1500px)"; }
+@media (max-width: 734px) {
+  :root { --enhanced-media-query: "(min-height: 415px) and (max-height: 850px)"; }
+}
+html.enhance-xp .sticky-container { min-height: var(--scroll-duration, 250vh); }
+html.enhance-xp .sticky-content   { position: sticky; top: 0; min-height: 100vh;
+                                    display: flex; flex-direction: column; justify-content: center; }
+/* a layer that drifts slower than the page: 1 - 0.65 = 35% of page speed */
+html.enhance-xp .sticky-content--slow { margin-top: calc(var(--scroll-duration, 250vh) * -0.65); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

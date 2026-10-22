@@ -1,8 +1,16 @@
 # apple-skill
 
 A Claude Code skill that teaches Apple's design system — the measured type
-scale, em-based vertical rhythm, motion curves, layout contracts and editorial
-copy voice used on apple.com.
+scale, em-based vertical rhythm, motion curves, scroll-linked technique, layout
+contracts and editorial copy voice used on apple.com.
+
+**It is a system, not a skin.** Applied to a design that already exists, it
+changes spacing, rhythm, type discipline and motion, and leaves the palette,
+the identity and the layout concept alone. A dark site stays dark. The skill
+leads with token *roles* and measured relationships rather than Apple's hex
+values, and the test suite enforces that: it asserts contrast ladders and
+separation between ink steps, never a brand colour — and fails a page that
+copied Apple's accent instead of mapping its own.
 
 Once installed, Claude applies it automatically whenever you ask for a
 marketing page, product page, landing page, hero, feature grid or comparison
@@ -38,13 +46,13 @@ cp -r apple-skill/skills/apple-design ~/.claude/skills/
 
 ```
 skills/apple-design/
-  SKILL.md                     the five rules that carry most of the effect, plus core tokens
+  SKILL.md                     what to change and what to leave alone, token roles, the four rules
   references/typography.md     the scale, the 20px family switch, the tracking table
   references/layout.md         rhythm, the content column, the tile contract, art direction
-  references/motion.md         curves, reveals, staggering, scroll-linked video
+  references/motion.md         curves, reveals, staggering, sticky parallax, scroll-linked video
   references/components.md     hero, feature grid, comparison table, gallery, local nav
   references/voice.md          how Apple writes headlines — read before writing copy
-  assets/apple-base.css        drop-in tokens and primitives
+  assets/apple-base.css        tokens and primitives for a NEW page (placeholder palette — replace it)
   assets/type-scale.json       all 106 measured typography classes
 ```
 
@@ -52,9 +60,8 @@ skills/apple-design/
 
 This teaches the *system* — proportion, rhythm, restraint, motion — so your own
 brand and assets come out looking considered. It deliberately ships none of
-Apple's content: no fonts, photography, product renders, icons or wordmarks.
-Swap `--accent` and the type stack for your own and the result stays premium
-without imitating Apple's identity.
+Apple's content: no fonts, photography, product renders, icons or wordmarks,
+and no part of it asks you to adopt Apple's colours.
 
 Apple, iPhone, Mac, iPad, macOS and SF Pro are trademarks of Apple Inc. This
 project is not affiliated with or endorsed by Apple.
@@ -65,9 +72,11 @@ MIT, for the skill's own text and CSS.
 
 ## Example
 
-`example/index.html` is a small page built only from the tokens in
-`assets/apple-base.css` — hero, feature grid, dark section, staggered reveal.
-Open it to see the system working, and as a shape to copy.
+`example/index.html` is a small page built on `assets/apple-base.css` — hero,
+feature grid, a sticky parallax section, an inverse section, staggered reveal.
+Its palette is deliberately **not** Apple's: warm, dark, its own identity, while
+every proportion, tracking value and curve is Apple's. That is the point of the
+skill in one file.
 
 ## Testing
 
@@ -79,7 +88,14 @@ node test/structure.mjs                 # the skill loads, refs resolve, no Appl
 node test/conformance.mjs <url>         # computed styles vs the measured values
 ```
 
-It checks the type scale, the tracking table, button geometry, the palette,
-the em rhythm ladder, the content column at each breakpoint, that type is
-re-picked rather than scaled on phone, that no text is lost with JS disabled,
-and that motion collapses under `prefers-reduced-motion`.
+99 checks: the type scale, the tracking table, button geometry, the em rhythm
+ladder, the content column at each breakpoint, that type is re-picked rather
+than scaled on phone, that scroll-linked sections use sticky plus a spacer and
+collapse to plain blocks without JS, that no text is lost with JS disabled, and
+that motion stops under `prefers-reduced-motion`.
+
+The palette is checked as **relationships** — three separated ink steps, an alt
+surface that is a near neighbour of the base, AA/AAA contrast on each role —
+never as specific colours. A check that asserted `#0071e3` would force every
+page built with this skill into being a clone, so one check asserts the
+opposite: that the accent is *not* Apple's.

@@ -19,8 +19,9 @@ Full-bleed section, centered content, headline → subhead → two CTAs → medi
 ```
 
 The hero takes the top of the padding ladder (115–140px). On a dark hero the
-supporting copy is `--ink-muted` (`#86868b`), not white — white on black for
-body text is harsh and Apple avoids it.
+supporting copy drops to `--ink-muted`, not full-contrast white — maximum
+contrast on body text is harsh, and Apple steps it down (`#86868b` on its own
+black) rather than using white.
 
 ## Feature grid
 

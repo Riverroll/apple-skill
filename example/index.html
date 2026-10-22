@@ -6,15 +6,43 @@
 <title>Northwind Vessel</title>
 <link rel="stylesheet" href="../skills/apple-design/assets/apple-base.css">
 <style>
-  :root { --accent: #0071e3; }
+  /* The point of this page: it uses Apple's proportions, rhythm, tracking and
+     motion, and none of Apple's colours. The palette below is Northwind's own —
+     warm, dark, nothing like apple.com — and every relationship the system
+     asks for still holds: three separated ink steps, an alt surface that is a
+     near neighbour of the base, one accent readable on both. */
+  :root {
+    --ink:             #f7f3ec;
+    --ink-secondary:   #b3a99b;
+    --ink-muted:       #8a8075;
+    --surface:         #14110e;
+    --surface-alt:     #1b1714;
+    --surface-inverse: #f7f3ec;
+    --ink-inverse:     #14110e;
+    --accent:          #c2703a;
+    --accent-hover:    #cf7b43;
+    --accent-active:   #b1652f;
+    --on-accent:       #14110e;   /* the accent is light, so its text is dark */
+    --font-display: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-text:    "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  .t-body, .t-intro { color: var(--ink-secondary); }
+  .section--dark .t-body, .section--dark .t-intro { color: #4a423a; }
+
   .feature-grid { display: grid; gap: 20px; grid-template-columns: repeat(3, 1fr); width: 100%; margin-top: 2em; }
   @media (max-width: 1068px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 734px)  { .feature-grid { grid-template-columns: 1fr; } }
-  .feature-card { border-radius: var(--radius-card); background: var(--surface); overflow: hidden; padding: 40px 28px; text-align: left; }
+  .feature-card { border-radius: var(--radius-card); background: var(--surface-alt); overflow: hidden; padding: 40px 28px; text-align: left; }
   .section--alt .feature-card { background: var(--surface); }
   .card-media { aspect-ratio: 3 / 2; border-radius: var(--radius-tile); margin-bottom: var(--headline-plus-first);
-                background: linear-gradient(135deg, #e8e8ed, #f5f5f7); }
-  .section--dark .feature-card { background: #1d1d1f; }
+                background: linear-gradient(135deg, #2a231c, #3a2f24); }
+
+  /* scroll-linked section — only --scroll-duration is page-specific */
+  .section-pinned { --scroll-duration: 250vh; padding-inline: var(--gutter); background: var(--surface-alt); }
+  @media (max-width: 734px) { .section-pinned { --scroll-duration: 180vh; } }
+  .vessel { width: 180px; height: 300px; border-radius: 90px / 40px; margin-inline: auto;
+            background: linear-gradient(100deg, #3a2f24 0%, #6b5744 45%, #2a231c 100%);
+            transition: transform 850ms var(--ease-dramatic); }
 </style>
 </head>
 <body>
@@ -54,18 +82,48 @@
     </div>
   </section>
 
+  <section class="section-pinned">
+    <div class="sticky-container">
+      <div class="sticky-content">
+        <div class="section-content">
+          <div class="vessel"></div>
+          <h2 class="t-headline" style="margin-top: var(--headline-plus-first)">One wall. Two temperatures.</h2>
+          <p class="t-body-reduced">Scroll.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="section section--dark">
     <div class="section-content">
       <h2 class="t-headline" data-reveal>Cold for a day.</h2>
       <p class="t-intro" data-reveal>Fill it at dawn. It will still be cold when you get back.</p>
     </div>
   </section>
+
+  <section class="section">
+    <div class="section-content">
+      <p class="t-body-reduced" data-reveal>Tested to 18&nbsp;hours hot and 24&nbsp;hours cold at 20&nbsp;°C ambient, lid closed.</p>
+      <p class="t-caption">Figures from internal testing. Real-world performance varies with fill volume, ambient temperature and how often the vessel is opened.</p>
+    </div>
+  </section>
 </main>
 
 <script type="module">
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // The enhancement gate, exactly as apple.com computes it: the scroll-linked
+  // layout only exists once these pass. Without this script the pinned section
+  // is an ordinary stacked block.
+  const heightRange = getComputedStyle(document.documentElement)
+    .getPropertyValue("--enhanced-media-query").trim().replace(/^"|"$/g, "");
+  if (!reduced && CSS.supports("position", "sticky") && CSS.supports("--a", "0")
+      && matchMedia(heightRange).matches) {
+    document.documentElement.classList.add("enhance-xp");
+  }
+
   // The hidden state is applied here, not in CSS, so the page stays readable
   // if this script never runs.
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const items = document.querySelectorAll("[data-reveal]");
   if (!reduced) {
     for (const el of items) el.classList.add("reveal--initial");
@@ -80,12 +138,23 @@
     }, { rootMargin: "0px 0px -15% 0px" });
     for (const el of items) io.observe(el);
   }
+
+  // Scroll progress through the pinned section, written once per frame.
+  const pinned = document.querySelector(".section-pinned");
+  const vessel = document.querySelector(".vessel");
+  if (pinned && vessel && document.documentElement.classList.contains("enhance-xp")) {
+    let ticking = false;
+    addEventListener("scroll", () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const r = pinned.getBoundingClientRect();
+        const p = Math.min(1, Math.max(0, -r.top / (r.height - innerHeight)));
+        vessel.style.transform = `rotate(${p * 24}deg) scale(${1 + p * 0.12})`;
+        ticking = false;
+      });
+    }, { passive: true });
+  }
 </script>
-  <section class="section">
-    <div class="section-content">
-      <p class="t-body-reduced" data-reveal>Tested to 18&nbsp;hours hot and 24&nbsp;hours cold at 20&nbsp;°C ambient, lid closed.</p>
-      <p class="t-caption">Figures from internal testing. Real-world performance varies with fill volume, ambient temperature and how often the vessel is opened.</p>
-    </div>
-  </section>
 </body>
 </html>

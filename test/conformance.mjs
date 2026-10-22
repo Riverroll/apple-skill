@@ -55,6 +55,17 @@ const evaluate = async (expr) => {
 const checks = [];
 const ok = (name, cond, detail = "") => checks.push({ name, pass: !!cond, detail });
 const eq = (name, got, exp) => ok(name, got === exp, `got ${got}, expected ${exp}`);
+// WCAG contrast, so the palette can be checked as RELATIONSHIPS rather than as
+// Apple's exact hex values. Asserting a brand colour would force every page
+// built with this skill to be a clone, which is the opposite of the point.
+const chan = (c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+const rgb = (css) => (css.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+const lum = (css) => { const [r, g, b] = rgb(css);
+  return 0.2126 * chan(r / 255) + 0.7152 * chan(g / 255) + 0.0722 * chan(b / 255); };
+const ratio = (a, b) => { const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05); };
+const atLeast = (name, got, min) => ok(name, got >= min, `${got.toFixed(2)}:1, need ${min}:1`);
+
 // em tracking -> px, the unit getComputedStyle reports
 const emToPx = (em, size) => {
   const px = +(parseFloat(em) * parseFloat(size)).toFixed(4);
@@ -105,25 +116,63 @@ ok("only the 40px step computes to letter-spacing: normal", strayNormal.length =
 // --- 3. buttons ---
 const btn = await evaluate(`(() => { const b = document.querySelector(".button:not([class*=--compact])");
   if (!b) return null; const cs = getComputedStyle(b);
-  return { pad: cs.padding, radius: cs.borderRadius, bg: cs.backgroundColor, size: cs.fontSize, minw: cs.minWidth }; })()`);
+  return { pad: cs.padding, radius: cs.borderRadius, bg: cs.backgroundColor,
+           fg: cs.color, size: cs.fontSize, minw: cs.minWidth }; })()`);
 if (btn) {
   eq("button padding is 12px 22px", btn.pad, "12px 22px");
   eq("button radius is a 980px pill", btn.radius, "980px");
-  eq("button background is the accent", btn.bg, "rgb(0, 113, 227)");
   eq("button font-size is 17px", btn.size, "17px");
   eq("button min-width is 70px", btn.minw, "70px");
 } else ok("page has a .button", false);
 
-// --- 4. palette ---
-const pal = await evaluate(`(() => { const s = getComputedStyle(document.documentElement);
-  const g = (k) => s.getPropertyValue(k).trim().toLowerCase();
-  return { ink: g("--ink"), alt: g("--surface-alt"), accent: g("--accent"),
-           sec: g("--ink-secondary"), muted: g("--ink-muted") }; })()`);
-eq("--ink is #1d1d1f", pal.ink, "#1d1d1f");
-eq("--surface-alt is #f5f5f7", pal.alt, "#f5f5f7");
-eq("--accent is #0071e3", pal.accent, "#0071e3");
-eq("--ink-secondary is #6e6e73", pal.sec, "#6e6e73");
-eq("--ink-muted is #86868b", pal.muted, "#86868b");
+// --- 4. palette RELATIONSHIPS (never exact brand values) ---
+// Each token is resolved through a probe element, so hex, hsl, color-mix and
+// anything else all come back as rgb().
+const pal = await evaluate(`(() => {
+  const keys = ["--ink","--ink-secondary","--ink-muted","--surface","--surface-alt","--accent","--on-accent"];
+  const root = getComputedStyle(document.documentElement);
+  const probe = document.createElement("span");
+  probe.style.position = "absolute"; probe.style.visibility = "hidden";
+  document.body.appendChild(probe);
+  const out = {};
+  for (const k of keys) {
+    if (!root.getPropertyValue(k).trim()) { out[k] = null; continue; }
+    probe.style.color = "var(" + k + ")";
+    out[k] = getComputedStyle(probe).color;
+  }
+  probe.remove();
+  return out;
+})()`);
+
+const need = (k) => { ok(`${k} is defined`, !!pal[k], "missing"); return pal[k]; };
+const ink = need("--ink"), sec = need("--ink-secondary"), muted = need("--ink-muted");
+const surf = need("--surface"), alt = need("--surface-alt");
+const accent = need("--accent"), onAccent = need("--on-accent");
+
+if (ink && sec && muted && surf) {
+  const rInk = ratio(ink, surf), rSec = ratio(sec, surf), rMuted = ratio(muted, surf);
+  atLeast("primary ink is AAA on the surface", rInk, 7);
+  atLeast("supporting copy is AA on the surface", rSec, 4.5);
+  atLeast("metadata ink still clears 3:1", rMuted, 3);
+  ok("the three ink steps are clearly separated",
+     rInk / rSec >= 1.15 && rSec / rMuted >= 1.15,
+     `${rInk.toFixed(1)} / ${rSec.toFixed(1)} / ${rMuted.toFixed(1)}`);
+  ok("the three ink steps are distinct colours",
+     new Set([ink, sec, muted]).size === 3, `${ink} ${sec} ${muted}`);
+}
+if (alt && surf) {
+  const r = ratio(alt, surf);
+  ok("alt surface is a near neighbour of the base, not a second theme",
+     r > 1.015 && r < 1.25, `${r.toFixed(3)}:1`);
+}
+if (accent && surf) atLeast("accent is legible on the surface", ratio(accent, surf), 3);
+if (accent && onAccent) atLeast("text on an accent fill is AA", ratio(onAccent, accent), 4.5);
+if (btn && accent) eq("button fill is the page's own --accent", btn.bg, accent);
+if (btn) atLeast("button label is AA on its fill", ratio(btn.fg, btn.bg), 4.5);
+// the guardrail: this skill teaches a system, so a page built with it must not
+// be wearing Apple's identity.
+ok("accent is the page's own, not Apple's #0071e3",
+   accent !== "rgb(0, 113, 227)", "palette copied instead of mapped");
 
 // --- 5. rhythm is em-based on the 0.4/0.8/1.6 ladder ---
 const rhythm = await evaluate(`(() => { const s = getComputedStyle(document.documentElement);
@@ -179,6 +228,36 @@ await load(1440);
 const rm = await evaluate(`(() => { const b = document.querySelector(".button");
   return b ? getComputedStyle(b).transitionDuration : null; })()`);
 ok("transitions collapse under prefers-reduced-motion", rm !== null && parseFloat(rm) <= 0.001, String(rm));
+
+// --- 10. scroll-linked sections use sticky + a spacer, and are gated ---
+// section 9 left reduced motion on, and the gate (correctly) refuses to run
+// the effect under it, so clear it first
+await call("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: "light" }] });
+await load(1440);
+const sticky = await evaluate(`(() => {
+  const el = document.querySelector(".sticky-content");
+  if (!el) return null;
+  const box = el.closest(".sticky-container") || el.parentElement;
+  const cs = getComputedStyle(el);
+  return { pos: cs.position, top: cs.top, minH: parseFloat(cs.minHeight) || 0,
+           boxH: box.getBoundingClientRect().height, vh: innerHeight,
+           gated: document.documentElement.classList.contains("enhance-xp") };
+})()`);
+if (sticky) {
+  eq("pinned content uses position: sticky", sticky.pos, "sticky");
+  eq("pinned content sticks to the top", sticky.top, "0px");
+  ok("pinned content fills the viewport", sticky.minH >= sticky.vh, `${sticky.minH} vs ${sticky.vh}px`);
+  ok("a spacer supplies the scroll distance", sticky.boxH >= sticky.vh * 1.5,
+     `container ${Math.round(sticky.boxH)}px for a ${sticky.vh}px viewport`);
+  ok("the effect is gated behind a JS-set class", sticky.gated, "enhance-xp absent");
+
+  await call("Emulation.setScriptExecutionDisabled", { value: true });
+  await load(1440);
+  const off = await evaluate(`(() => { const el = document.querySelector(".sticky-content");
+    return el ? getComputedStyle(el).position : null; })()`);
+  await call("Emulation.setScriptExecutionDisabled", { value: false });
+  eq("without JS the section is an ordinary block", off, "static");
+}
 
 ws.close(); chrome.kill(); try { fs.rmSync(prof, { recursive: true, force: true }); } catch {}
 

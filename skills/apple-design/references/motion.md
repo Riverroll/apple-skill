@@ -107,6 +107,106 @@ Requirements that are easy to miss:
 - Always `{ passive: true }` on the scroll listener, and always coalesce into
   `requestAnimationFrame` — one `currentTime` write per frame, never per event.
 
+## Parallax and scroll-linked sections
+
+Apple's parallax is **CSS `position: sticky` plus a spacer**, not a transform
+driven by a scroll handler. One element pins to the viewport while a sibling
+supplies the scroll distance during which it stays pinned. Nothing moves per
+scroll event, so it never jitters and costs nothing on the main thread.
+
+The pattern, as it ships:
+
+```css
+.section-hero {
+  --scroll-duration: 250vh;          /* how long the pinned state lasts */
+}
+.section-hero .sticky-container {
+  min-height: var(--scroll-duration);
+}
+.section-hero .sticky-content {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+```
+
+```html
+<section class="section-hero">
+  <div class="sticky-container">
+    <div class="sticky-content"><!-- pinned while the container scrolls past --></div>
+  </div>
+</section>
+```
+
+`--scroll-duration` is the only knob. Measured values on apple.com:
+`250vh` and `320vh` for long product sequences, `200vh` for a two-up compare,
+and `300px` for a short hero settle. Phone values are smaller than desktop ones
+— step it down in the media query rather than letting a `vh` figure stand.
+
+### Layer speed, without JS
+
+To make pinned content drift *slower* than the page (the parallax read), give it
+a negative top margin proportional to the same variable:
+
+```css
+.section-hero .sticky-content {
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+  margin-top: calc(var(--scroll-duration) * -0.65);
+}
+.section-hero .scroll-duration { height: var(--scroll-duration); }
+```
+
+The `-0.65` is the speed: the layer travels 35% of the page's scroll distance.
+Apple ships exactly `-0.65` on its privacy hero. Lower magnitude = closer to
+page speed. Keep every layer on one shared `--scroll-duration` so they stay in
+proportion when the value changes.
+
+### The enhancement gate
+
+The non-obvious part: **the whole scroll-linked layout is gated behind a class
+on `<html>` that JS adds only after feature tests pass.** Every rule above is
+written `html.enhance-xp .section-hero .sticky-content { … }`. Without the
+class, the section is an ordinary stacked block — no pin, no spacer height, no
+missing content.
+
+Apple's own condition, decompiled from its shipped head script:
+
+```js
+const enhance =
+  !prefersReducedMotion &&
+  !isAndroid && !isLegacyEdge && !isBelowIOS13 &&   // known-janky engines
+  CSS.supports("position", "sticky") &&
+  CSS.supports("--a", "0") &&
+  matchMedia(heightRange).matches;                  // viewport tall enough
+
+if (enhance) document.documentElement.classList.add("enhance-xp");
+```
+
+`heightRange` is read out of a CSS custom property, not hard-coded in the
+script — so the viewport range that gets the effect lives next to the CSS it
+governs:
+
+```css
+:root { --enhanced-media-query: "(min-height: 500px) and (max-height: 1500px)"; }
+@media (max-width: 734px) {
+  :root { --enhanced-media-query: "(min-height: 415px) and (max-height: 850px)"; }
+}
+```
+
+```js
+const heightRange = getComputedStyle(document.documentElement)
+  .getPropertyValue("--enhanced-media-query").trim().replace(/^"|"$/g, "");
+```
+
+A sticky sequence that needs 250vh of scroll is wrong on a 380px-tall window and
+wrong on a 2000px one. Apple simply does not run it there. Copy the gate, not
+just the sticky rules — it is what stops the effect from being a liability.
+
+`prefers-reduced-motion` is inside the gate, so reduced motion gets the plain
+stacked section rather than a retimed version of the pinned one.
+
 ## Reduced motion
 
 ```css
