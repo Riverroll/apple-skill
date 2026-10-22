@@ -204,8 +204,20 @@ Load only the reference you need:
   sticky local nav.
 - `references/voice.md` — read before writing any headline, subhead or button.
 
-`tools/audit.mjs` runs against any live URL and changes nothing. Run it before
-and after — the before/after counts are also how you show someone what you did.
+`tools/audit.mjs` runs against any live URL and changes nothing. It measures at
+1440 / 900 / 500px, so it also catches headlines that were scaled on phone
+rather than re-picked. Save a baseline before you start and diff against it
+after:
+
+```sh
+node tools/audit.mjs <url> --json before.json
+# ...do the work...
+node tools/audit.mjs <url> --baseline before.json
+```
+
+The delta is how you show someone what the pass did. Without it, a page whose
+rhythm improved looks unchanged, and the only honest answer to "did anything
+change?" is a shrug.
 
 `assets/apple-base.css` is a starting point for a **new** page with no design of
 its own. Do not drop it onto an existing site — take the rhythm and motion

@@ -62,24 +62,43 @@ skills/apple-design/
 
 ```sh
 node tools/audit.mjs https://example.com
+node tools/audit.mjs https://example.com --json before.json
+node tools/audit.mjs https://example.com --baseline before.json
 ```
 
-Reads computed styles out of a real headless browser — any stack, no
-instrumentation, changes nothing — and ranks what is countably wrong:
+Reads computed styles out of a real headless browser at **1440 / 900 / 500px**
+— any stack, no instrumentation, changes nothing — and ranks what is countably
+wrong, naming the elements:
 
 ```
   1. 6 accent hues in use
-     150° ×41  180° ×147  210° ×83  240° ×5  270° ×149  330° ×34
+     150° ×29  180° ×98  210° ×56  240° ×5  270° ×98  330° ×23
+       · 150°  div.space-y-10 > div.relative.pl-8 > div.absolute.left-0
+       · 270°  div.space-y-4 > div.p-4.rounded-xl > p.text-violet-400/70
      -> Apple ships one. Pick the hue that already means 'action' on this page
         and map the rest to ink steps.
-
-  2. 33 distinct text colours
-     ...
 ```
 
-It also finds sticky elements that cannot stick because an ancestor clips
-scrolling, display sizes shipping `letter-spacing: normal`, and radius,
-padding and duration scatter.
+It also reports: text colours and radius/padding/duration scatter, display
+sizes shipping `letter-spacing: normal`, headlines **scaled** on phone instead
+of re-picked (and large ones that never step down at all), text below WCAG AA
+against the background it actually sits on, sticky elements that cannot stick
+because an ancestor clips scrolling, and headline length against Apple's
+median of three words.
+
+`--json` writes the raw measurements; `--baseline` prints the delta against an
+earlier run:
+
+```
+  change since baseline
+
+     accent hues                        6 ↓ 1
+     text colours                      33 ↓ 7
+     corner radii                       5 ↓ 3
+```
+
+That second form answers the question every one of these passes runs into —
+"did anything actually change?" — with a number instead of an opinion.
 
 Run it **before** you change anything. Rhythm and tracking are what a page
 feels like; the counts above are what it looks like. Fixing rhythm on a site

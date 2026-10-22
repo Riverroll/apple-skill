@@ -28,6 +28,18 @@ for (const f of fs.readdirSync(path.join(SKILL, "references"))) {
   ok(`reference has real content: ${f}`, size > 1500, `${size}B`);
 }
 
+// the audit tool is part of what ships
+for (const t of ["tools/audit.mjs"]) {
+  const f = path.join(ROOT, t);
+  ok(`tool exists: ${t}`, fs.existsSync(f));
+  if (fs.existsSync(f)) {
+    const src = fs.readFileSync(f, "utf8");
+    ok(`${t} is read-only (no page mutation)`, !/document\.write|innerHTML\s*=/.test(src));
+    ok(`${t} measures more than one width`, /WIDTHS\s*=\s*\[[^\]]*,/.test(src));
+  }
+}
+ok("SKILL.md points at the audit tool", /tools\/audit\.mjs/.test(skillMd));
+
 // plugin manifests parse
 for (const m of [".claude-plugin/plugin.json", ".claude-plugin/marketplace.json"]) {
   let parsed = null;
