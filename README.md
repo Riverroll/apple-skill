@@ -45,8 +45,10 @@ cp -r apple-skill/skills/apple-design ~/.claude/skills/
 ## What's inside
 
 ```
+tools/audit.mjs                audit any live URL — see below
 skills/apple-design/
   SKILL.md                     what to change and what to leave alone, token roles, the four rules
+  references/restraint.md      one accent, three inks, three radii, two weights
   references/typography.md     the scale, the 20px family switch, the tracking table
   references/layout.md         rhythm, the content column, the tile contract, art direction
   references/motion.md         curves, reveals, staggering, sticky parallax, scroll-linked video
@@ -55,6 +57,34 @@ skills/apple-design/
   assets/apple-base.css        tokens and primitives for a NEW page (placeholder palette — replace it)
   assets/type-scale.json       all 106 measured typography classes
 ```
+
+## Audit an existing page
+
+```sh
+node tools/audit.mjs https://example.com
+```
+
+Reads computed styles out of a real headless browser — any stack, no
+instrumentation, changes nothing — and ranks what is countably wrong:
+
+```
+  1. 6 accent hues in use
+     150° ×41  180° ×147  210° ×83  240° ×5  270° ×149  330° ×34
+     -> Apple ships one. Pick the hue that already means 'action' on this page
+        and map the rest to ink steps.
+
+  2. 33 distinct text colours
+     ...
+```
+
+It also finds sticky elements that cannot stick because an ancestor clips
+scrolling, display sizes shipping `letter-spacing: normal`, and radius,
+padding and duration scatter.
+
+Run it **before** you change anything. Rhythm and tracking are what a page
+feels like; the counts above are what it looks like. Fixing rhythm on a site
+that is already roughly spaced produces a diff full of real improvements and a
+page its owner says looks identical — and they are right.
 
 ## Scope
 
@@ -88,7 +118,8 @@ node test/structure.mjs                 # the skill loads, refs resolve, no Appl
 node test/conformance.mjs <url>         # computed styles vs the measured values
 ```
 
-99 checks: the type scale, the tracking table, button geometry, the em rhythm
+105 checks: the restraint counts (one accent hue, at most seven text colours,
+three radii, weights 400/600), the type scale, the tracking table, button geometry, the em rhythm
 ladder, the content column at each breakpoint, that type is re-picked rather
 than scaled on phone, that scroll-linked sections use sticky plus a spacer and
 collapse to plain blocks without JS, that no text is lost with JS disabled, and

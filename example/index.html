@@ -27,7 +27,9 @@
     --font-text:    "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
   .t-body, .t-intro { color: var(--ink-secondary); }
-  .section--dark .t-body, .section--dark .t-intro { color: #4a423a; }
+  .section--dark .t-body, .section--dark .t-intro {
+    color: color-mix(in srgb, var(--ink-inverse) 62%, var(--surface-inverse));
+  }
 
   .feature-grid { display: grid; gap: 20px; grid-template-columns: repeat(3, 1fr); width: 100%; margin-top: 2em; }
   @media (max-width: 1068px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -86,7 +88,7 @@
     <div class="sticky-container">
       <div class="sticky-content">
         <div class="section-content">
-          <div class="vessel"></div>
+          <div class="vessel" data-decorative></div>
           <h2 class="t-headline" style="margin-top: var(--headline-plus-first)">One wall. Two temperatures.</h2>
           <p class="t-body-reduced">Scroll.</p>
         </div>

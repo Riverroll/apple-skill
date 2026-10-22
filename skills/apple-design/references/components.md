@@ -99,6 +99,22 @@ links and a buy button on the right.
 The translucent blur is the signature. The active section link gets a 2px
 underline in `--ink`, not a background fill.
 
+**Translucency has a condition.** It works on Apple's pages because what scrolls
+under the bar is photography and generous whitespace. Put a 48px headline under
+a 72%-opacity bar and the headline reads *through* it — the page looks like a
+printing error. If large type passes under the nav, raise the background to
+near-opaque once it is stuck (Apple does exactly this on pages with big
+headlines) and keep the blur for the texture:
+
+```css
+.localnav            { background: color-mix(in srgb, var(--surface) 72%, transparent); }
+.localnav--scrolled  { background: color-mix(in srgb, var(--surface) 96%, transparent); }
+```
+
+Toggle the class from a scroll listener at a threshold of a few pixels, not from
+an IntersectionObserver on the hero — the bar must be solid before the first
+headline reaches it, not after.
+
 ## Dynamic pricing and live data
 
 Apple injects prices client-side from a commerce API. If you copy this pattern,

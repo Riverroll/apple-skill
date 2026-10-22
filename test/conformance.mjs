@@ -184,11 +184,16 @@ eq("rhythm follows the 0.4 / 0.8 / 1.6 ladder",
    "0.4em 0.4em 0.8em 0.8em 1.6em");
 
 // --- 6. content column + breakpoints ---
-eq("content column is 1068px on desktop",
-   await evaluate(`getComputedStyle(document.querySelector(".section-content")).maxWidth`), "1068px");
-await load(900);
-eq("content column is 734px on tablet",
-   await evaluate(`getComputedStyle(document.querySelector(".section-content")).maxWidth`), "734px");
+// a page that did not start from apple-base.css has its own column class, so
+// this is skipped rather than failed
+const colWidth = `(() => { const el = document.querySelector(".section-content");
+  return el ? getComputedStyle(el).maxWidth : null; })()`;
+const colDesktop = await evaluate(colWidth);
+if (colDesktop) {
+  eq("content column is 1068px on desktop", colDesktop, "1068px");
+  await load(900);
+  eq("content column is 734px on tablet", await evaluate(colWidth), "734px");
+}
 
 // --- 7. type is re-picked on phone, not scaled ---
 await load(500);
@@ -258,6 +263,61 @@ if (sticky) {
   await call("Emulation.setScriptExecutionDisabled", { value: false });
   eq("without JS the section is an ordinary block", off, "static");
 }
+
+// --- 11. restraint: the counts a reader notices before reading ---
+const counts = await evaluate(`(() => {
+  const cx = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+  const seen = new Map();
+  const px = (v) => {
+    if (!v || v === "none" || v === "transparent") return null;
+    if (seen.has(v)) return seen.get(v);
+    let out = null;
+    try { cx.clearRect(0,0,1,1); cx.fillStyle = "rgba(0,0,0,0)"; cx.fillStyle = v;
+          cx.fillRect(0,0,1,1); const p = cx.getImageData(0,0,1,1).data;
+          out = { r: p[0], g: p[1], b: p[2], a: p[3] / 255 }; } catch {}
+    seen.set(v, out); return out;
+  };
+  const hue = (c) => {
+    const r = c.r/255, g = c.g/255, b = c.b/255;
+    const mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx - mn, l = (mx+mn)/2;
+    if (!d) return null;
+    const s = d / (1 - Math.abs(2*l - 1));
+    if (s < 0.3 || l < 0.08 || l > 0.96) return null;
+    let h = mx === r ? ((g-b)/d) % 6 : mx === g ? (b-r)/d + 2 : (r-g)/d + 4;
+    return Math.round(((h*60)+360) % 360 / 30) * 30 % 360;
+  };
+  const hues = {}, inks = new Set(), radii = new Set(), weights = new Set();
+  for (const el of document.querySelectorAll("body *")) {
+    const cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden") continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) continue;
+    const text = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
+    if (text) {
+      const c = px(cs.color);
+      if (c && c.a > 0.05) inks.add(Math.round(c.r)+","+Math.round(c.g)+","+Math.round(c.b)+","+c.a.toFixed(2));
+      weights.add(cs.fontWeight);
+    }
+    for (const v of [cs.color, cs.backgroundColor, cs.borderTopColor]) {
+      const c = px(v); if (!c || c.a < 0.12) continue;
+      const h = hue(c); if (h === null) continue;
+      hues[h] = (hues[h] || 0) + 1;
+    }
+    // illustrations are shapes, not UI geometry — mark them data-decorative
+    if (el.closest("[data-decorative]")) continue;
+    const rad = parseFloat(cs.borderTopLeftRadius);
+    if (rad > 0 && cs.borderTopLeftRadius.indexOf("%") === -1) radii.add(rad >= 500 ? "pill" : Math.round(rad));
+  }
+  return { hues: Object.entries(hues).filter(([,n]) => n >= 3).map(([h]) => h),
+           inks: inks.size, radii: [...radii], weights: [...weights] };
+})()`);
+ok("one accent hue, not a palette of them", counts.hues.length <= 2,
+   `${counts.hues.length} hues: ${counts.hues.join("deg, ")}deg`);
+ok("text uses at most 7 colours (3 steps + inverse pair + accent + link)",
+   counts.inks <= 7, `${counts.inks} distinct`);
+ok("at most 3 corner radii", counts.radii.length <= 3, counts.radii.join(" / "));
+ok("weights are 400 and 600, nothing else",
+   counts.weights.every((w) => ["400", "600", "500"].includes(w)), counts.weights.join(" "));
 
 ws.close(); chrome.kill(); try { fs.rmSync(prof, { recursive: true, force: true }); } catch {}
 

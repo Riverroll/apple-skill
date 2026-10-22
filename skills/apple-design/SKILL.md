@@ -70,18 +70,24 @@ levels are clearly separated. On dark, Apple inverts to `#000` base with
 `#f5f5f7` ink and `#86868b` for supporting copy — note the base is pure black,
 not a dark grey.
 
-## The four rules that carry most of the effect
+## The five rules that carry most of the effect
 
-1. **Type switches family at 20px.** Below 20px use the Text optical size, 20px
+1. **One accent, three ink steps, three radii, two weights.** This is the one
+   that shows. Count what a page actually uses before changing anything —
+   `node tools/audit.mjs <url>` does the counting. A page with six accent hues
+   and eight text colours does not have a spacing problem, and fixing its
+   spacing will look to its owner like nothing happened. See
+   `references/restraint.md`.
+2. **Type switches family at 20px.** Below 20px use the Text optical size, 20px
    and up use Display. With a family that has no optical sizes, carry the effect
    through tracking instead.
-2. **Tracking is a function of size and crosses zero at 40px.** Body 17px is
+3. **Tracking is a function of size and crosses zero at 40px.** Body 17px is
    `-0.022em`; 21px intro is `+0.011em`; 64px headline is `-0.009em`. Pick a
    value from the table in `references/typography.md` for every size — one flat
    tracking across a page is the commonest way this gets faked badly.
-3. **Vertical rhythm is in `em`, not `px`,** so spacing scales with the type it
+4. **Vertical rhythm is in `em`, not `px`,** so spacing scales with the type it
    follows. This is the single highest-leverage change on an existing site.
-4. **Headlines are short declarative fragments ending in a full stop.** Median
+5. **Headlines are short declarative fragments ending in a full stop.** Median
    on apple.com is *three words*. See `references/voice.md` before writing copy.
 
 ## Breakpoints
@@ -151,25 +157,42 @@ Honour reduced motion, always:
 
 ## Applying this to a site that already exists
 
-Work in this order, and stop when the page feels right — you rarely need all of it:
+**Audit before you touch anything.** `node tools/audit.mjs <url>` reads computed
+styles out of a real browser — any stack, no instrumentation — and ranks what is
+countably wrong. Work its list top-down. Its first two findings are what someone
+notices; everything below them is what they feel.
 
-1. **Rhythm first.** Replace ad-hoc `px` margins between stacked elements with
-   the `em` ladder. Biggest visible gain, zero identity change.
-2. **Section padding.** Collapse the page onto one value from the ladder.
-3. **Type.** Apply the tracking table to existing sizes before changing any size.
-   Negative tracking on large type is most of what reads as "designed".
-4. **Motion.** Swap easing curves and durations for the measured ones. Keep the
+The default order, when the audit is clean or unavailable:
+
+1. **Restraint.** Collapse to one accent, three ink steps, three radii, two
+   weights. `references/restraint.md`. This is almost always the visible fix,
+   and it is *not* a palette change — the hues stay, they just stop competing.
+2. **Type scale.** Put headlines on the measured ladder: 48px section headline,
+   64px hero, re-picked (not scaled) on phone, each with its own tracking.
+   A headline that goes 36px → 48px at weight 600 is the second thing anyone
+   notices.
+3. **Rhythm.** Replace ad-hoc `px` margins between stacked elements with the
+   `em` ladder.
+4. **Section padding.** Collapse the page onto one value from the ladder.
+5. **Motion.** Swap easing curves and durations for the measured ones. Keep the
    effects the site already has — just retime them.
-5. **Parallax and scroll.** See `references/motion.md`; layer speeds and
-   scroll-linked media are technique, and work on any aesthetic.
-6. **Copy.** Shorten headlines to the voice rules.
+6. **Parallax and scroll.** See `references/motion.md`; sticky sequences and
+   layer speeds are technique, and work on any aesthetic.
+7. **Copy.** Shorten headlines to the voice rules.
 
-Leave the palette until last, and usually leave it alone.
+Leave the palette's *hues* alone. Restraint is about how many of them are doing
+work at once, not about replacing them.
+
+A warning from doing this wrong: starting at step 3 on a site that is already
+roughly spaced produces a diff full of real improvements and a page that looks
+identical. The owner will say nothing changed, and they will be right to.
 
 ## What to read next
 
 Load only the reference you need:
 
+- `references/restraint.md` — the counts: one accent, three inks, three radii,
+  two weights, and how to map a rainbow back down without losing an identity.
 - `references/typography.md` — the scale, the 20px family switch, the tracking
   table, the seven-step headline ladder, and `assets/type-scale.json` with all
   106 measured classes.
@@ -180,6 +203,9 @@ Load only the reference you need:
 - `references/components.md` — hero, feature grid, comparison table, gallery,
   sticky local nav.
 - `references/voice.md` — read before writing any headline, subhead or button.
+
+`tools/audit.mjs` runs against any live URL and changes nothing. Run it before
+and after — the before/after counts are also how you show someone what you did.
 
 `assets/apple-base.css` is a starting point for a **new** page with no design of
 its own. Do not drop it onto an existing site — take the rhythm and motion

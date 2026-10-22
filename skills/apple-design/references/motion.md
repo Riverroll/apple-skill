@@ -163,6 +163,44 @@ Apple ships exactly `-0.65` on its privacy hero. Lower magnitude = closer to
 page speed. Keep every layer on one shared `--scroll-duration` so they stay in
 proportion when the value changes.
 
+### Four ways a sticky section silently does nothing
+
+Every one of these produces no error and no visible effect, which is why they
+cost hours:
+
+1. **An ancestor clips the scroll.** `position: sticky` is inert inside any
+   ancestor with `overflow: hidden | auto | scroll | clip` on the scroll axis.
+   Decorative blur layers are the usual culprit — a section wraps itself in
+   `overflow: hidden` to contain its own glow, and kills every sticky inside it.
+   Put the clipping on the decorative layer, not the section.
+   `tools/audit.mjs` reports these by name.
+2. **The pinned element has no travel.** A sticky element only moves relative to
+   its *parent box*. If it is the tallest thing in its row — a photo beside a
+   shorter column of text — the parent is exactly as tall as the photo and there
+   is nothing to travel through. Either give the parent a spacer, or pin the
+   short column and let the long one scroll.
+3. **It overlaps what follows.** A sticky element keeps its slot in flow, so
+   once that slot scrolls away it visually sits on top of its later siblings.
+   A sticky card above other cards in the same column will cover them. Pin the
+   whole column, or give the pinned thing a container of its own.
+4. **It is taller than the viewport.** Then `top` cannot be honoured in any
+   useful way and the element's top edge disappears under whatever is fixed at
+   the top of the page. Give it `top: var(--sticky-top)` equal to the global nav
+   height, and check that its own content still fits in `100vh` minus that.
+
+Measure rather than guess: `getBoundingClientRect().top` on the pinned element
+at several scroll positions tells you exactly where the pin engages and
+releases.
+
+```
+scrollY 6000 -> top 1023   not yet
+scrollY 6600 -> top   64   pinned
+scrollY 7200 -> top  -35   released
+```
+
+Pinned travel equals `container height - element height`, so a `200vh`
+container around a `100vh` element pins for exactly one viewport of scrolling.
+
 ### The enhancement gate
 
 The non-obvious part: **the whole scroll-linked layout is gated behind a class
