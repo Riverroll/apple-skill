@@ -49,6 +49,8 @@ tools/audit.mjs                audit any live URL — see below
 skills/apple-design/
   SKILL.md                     what to change and what to leave alone, token roles, the four rules
   references/restraint.md      one accent, three inks, three radii, two weights
+  references/dark.md           what inverts on a dark site, and what breaks silently
+  references/stacks.md         Tailwind / CSS modules / CSS-in-JS, and the migration order
   references/typography.md     the scale, the 20px family switch, the tracking table
   references/layout.md         rhythm, the content column, the tile contract, art direction
   references/motion.md         curves, reveals, staggering, sticky parallax, scroll-linked video
@@ -82,9 +84,13 @@ wrong, naming the elements:
 It also reports: text colours and radius/padding/duration scatter, display
 sizes shipping `letter-spacing: normal`, headlines **scaled** on phone instead
 of re-picked (and large ones that never step down at all), text below WCAG AA
-against the background it actually sits on, sticky elements that cannot stick
-because an ancestor clips scrolling, and headline length against Apple's
-median of three words.
+against the background it actually sits on, text sitting under an ancestor
+stuck below full opacity (which multiplies every ink step inside it), sticky
+elements that cannot stick because an ancestor clips scrolling, and headline
+length against Apple's median of three words.
+
+It walks the page before measuring, so scroll-triggered reveals have run and
+are not counted as hidden content.
 
 `--json` writes the raw measurements; `--baseline` prints the delta against an
 earlier run:

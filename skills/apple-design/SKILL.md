@@ -92,7 +92,9 @@ not a dark grey.
 
 ## Breakpoints
 
-Three bands, written as a closed middle, never overlapping min-widths:
+Three bands, written as a closed middle, never overlapping min-widths. If the
+project uses a framework with its own scale — Tailwind switches at 768px, not
+735px — replace it rather than working around it: `references/stacks.md`.
 
 ```css
 @media (max-width: 734px)                         { /* phone  */ }
@@ -203,6 +205,13 @@ Load only the reference you need:
 - `references/components.md` — hero, feature grid, comparison table, gallery,
   sticky local nav.
 - `references/voice.md` — read before writing any headline, subhead or button.
+- `references/dark.md` — read before applying any of this to a site that is
+  dark all the way through. Four of the system's colour habits invert and one
+  of them (alpha ink under an opacity reveal) breaks silently.
+- `references/stacks.md` — how the tokens, breakpoints and type ladder are
+  expressed in Tailwind, CSS modules and CSS-in-JS, plus the migration order
+  that keeps a page shippable at every commit. Tailwind's default breakpoints
+  are *not* these breakpoints.
 
 `tools/audit.mjs` runs against any live URL and changes nothing. It measures at
 1440 / 900 / 500px, so it also catches headlines that were scaled on phone

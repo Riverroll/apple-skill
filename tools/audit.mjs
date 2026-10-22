@@ -101,6 +101,7 @@ function probeFn() {
     contrast: [],
     stickyBlocked: [], stickyOk: 0,
     pxRhythm: [],
+    dimmed: [],
     nodes: 0,
   };
   const bump = (o, k) => (o[k] = (o[k] || 0) + 1);
@@ -139,6 +140,14 @@ function probeFn() {
         if (ratio < (large ? 3 : 4.5) && c.a > 0.3)
           out.contrast.push({ where: pathOf(el), colour: key(cs.color), ratio: +ratio.toFixed(2), size });
       }
+
+      // an ancestor stuck below full opacity multiplies every ink step inside
+      // it — a reveal that never completed, or a "subtle" wrapper
+      let o = 1;
+      for (let n = el; n && n !== document.body; n = n.parentElement) o *= parseFloat(getComputedStyle(n).opacity);
+      // an effective 0 is hidden, not dimmed — that is a reveal that has not
+      // run, which is a different problem and would drown this one
+      if (o < 0.95 && o > 0.05) out.dimmed.push({ where: pathOf(el), opacity: +o.toFixed(2) });
 
       const size = Math.round(parseFloat(cs.fontSize));
       if (size >= 20) {
@@ -234,9 +243,19 @@ const measure = async (width) => {
   await call("Emulation.setDeviceMetricsOverride", { width, height: 900, deviceScaleFactor: 1, mobile: false });
   await call("Page.navigate", { url });
   await sleep(4500);
-  // let anything scroll-triggered reveal itself before measuring
-  await call("Runtime.evaluate", { expression: "window.scrollTo(0, document.body.scrollHeight); window.scrollTo(0, 0);" });
-  await sleep(1000);
+  // Walk the page so scroll-triggered reveals actually fire. An instant jump
+  // to the bottom does not give an IntersectionObserver anything to observe,
+  // and everything below the fold then measures as opacity 0.
+  await call("Runtime.evaluate", { expression: `(async () => {
+    const step = innerHeight * 0.8;
+    for (let y = 0; y < document.body.scrollHeight; y += step) {
+      window.scrollTo(0, y);
+      await new Promise((r) => setTimeout(r, 120));
+    }
+    window.scrollTo(0, 0);
+    await new Promise((r) => setTimeout(r, 400));
+  })()`, awaitPromise: true });
+  await sleep(800);
   const r = await call("Runtime.evaluate", { expression: `(${probeFn.toString()})()`, returnByValue: true });
   if (r.exceptionDetails) { console.error(r.exceptionDetails.text); process.exit(1); }
   return JSON.parse(r.result.value);
@@ -328,6 +347,12 @@ if (d.stickyBlocked.length)
       "Move the overflow:hidden onto the decorative layer that needs it, not the section.",
       d.stickyBlocked);
 
+if (d.dimmed.length)
+  add(7, `${d.dimmed.length} text element(s) sitting under a stuck opacity`,
+      "every ink step inside them is multiplied by it",
+      "opacity on an ancestor compounds, unlike a colour alpha. If this is a reveal, it never completed; if it is a 'subtle' wrapper, set the colour instead. See references/dark.md.",
+      d.dimmed.slice(0, 4).map((x) => `${x.opacity} effective  ${x.where}`));
+
 if (d.contrast.length)
   add(8, `${d.contrast.length} text element(s) below WCAG AA`,
       d.contrast.slice(0, 3).map((c) => `${c.ratio}:1 at ${Math.round(c.size)}px — ${c.colour}`).join("   "),
@@ -360,7 +385,7 @@ const summary = {
   hues: hues.length, inks, radii: radii.length, pads, durs: durs.length,
   strayNormal: strayNormal.length, scaled: scaled.length, frozen: frozen.length,
   stickyBlocked: d.stickyBlocked.length, stickyOk: d.stickyOk,
-  contrastFails: d.contrast.length, nodes: d.nodes,
+  contrastFails: d.contrast.length, dimmed: d.dimmed.length, nodes: d.nodes,
 };
 
   return { summary, findings, byWidth };
@@ -392,6 +417,7 @@ function reportDelta(was, now) {
     pads: "section paddings", durs: "durations", strayNormal: "sizes tracked normal",
     scaled: "headlines scaled not re-picked", frozen: "headlines frozen on phone",
     stickyBlocked: "sticky blocked", contrastFails: "below AA",
+    dimmed: "text under a stuck opacity",
   };
   console.log("  change since baseline\n");
   let moved = false;

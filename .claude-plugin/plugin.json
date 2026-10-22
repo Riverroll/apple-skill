@@ -1,6 +1,6 @@
 {
   "name": "apple-skill",
-  "version": "1.0.0",
-  "description": "Design and build interfaces with Apple's system: measured type scale, spacing rhythm, motion curves, layout contracts and editorial voice.",
+  "version": "1.3.0",
+  "description": "Design and build interfaces with Apple's system: restraint rules, measured type scale, spacing rhythm, motion and parallax, layout contracts and editorial voice — plus an audit that measures any live page against them.",
   "author": { "name": "Riverroll" }
 }
