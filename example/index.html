@@ -85,7 +85,14 @@
                            align-items: center; justify-content: space-between;
                            min-height: 100vh; padding: 7vh 0 6vh; }
   .hero .cta-row { justify-content: center; }
-  .hero .t-intro { max-width: 34ch; margin-inline: auto; }
+  /* Over the photograph the ink tokens have nothing holding them up: the
+     secondary step is grey picked against a surface, and the accent is a hue
+     picked against it. Both take the primary ink here — the step that already
+     exists, not a new white. See the rule in references/composition.md. */
+  .hero .t-intro { max-width: 34ch; margin-inline: auto; color: var(--ink); }
+  .hero .button--secondary { color: var(--ink); border-color: color-mix(in srgb, var(--ink) 45%, transparent); }
+  .hero .button--secondary:hover { background: color-mix(in srgb, var(--ink) 12%, transparent);
+                                   border-color: var(--ink); }
   .hero-top, .hero-foot { width: 100%; }
 
   .band { position: relative; height: 92vh; overflow: hidden; background: var(--surface-alt); }

@@ -288,7 +288,13 @@ function probeFn() {
     } else if (b.top >= innerHeight) {
       below++;
       if (img.loading === "lazy") deferred++;
-      for (const a of img.attributes) if (/^data-(lazy|src|srcset|download)/.test(a.name)) { custom++; break; }
+      // a lazy-loading system of your own marks the <picture> or a wrapper,
+      // not necessarily the <img> — apple.com puts data-lazy on the picture
+      let marked = false;
+      for (let n = img; n && n !== document.body && !marked; n = n.parentElement) {
+        for (const a of n.attributes) if (/^data-(lazy|src|srcset|download|image)/.test(a.name)) { marked = true; break; }
+      }
+      if (marked) custom++;
     }
   }
   out.media.hero = hero ? {
@@ -850,10 +856,10 @@ if (!useErp && pads > 3)
       top(d.sectionPad, 8).map(([p, n]) => `${p} ×${n}`).join("  "),
       "Collapse onto one value from the ladder (80 or 100 desktop, ~60 phone). Varying it ad hoc is what makes a page feel loose.");
 
-if (durs.length > 4)
+if (durs.length > 9)
   add(3, `${durs.length} transition durations`,
       durs.map(([t, n]) => `${t} ×${n}`).join("  "),
-      "250ms default, 100ms hover, 400ms reveal. Hover must be the fastest thing on the page.");
+      "Measured on the mirror, apple.com ships 5 to 9 distinct durations on a product page — 100ms hover, 250ms default, 400ms reveal, 900/700ms for a content reveal, and a few component-specific ones. The ceiling is the point: past about nine, none of them is a default any more.");
 
 if (d.stickyBlocked.length)
   add(9, `${d.stickyBlocked.length} sticky element(s) that cannot stick`,
