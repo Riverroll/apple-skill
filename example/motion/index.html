@@ -61,9 +61,12 @@ video.media.is-playing{opacity:1}          /* the still shows until a frame exis
 
 .hero{position:relative;color:#fff;background:#1a1512;overflow:hidden}
 .hero .video-element-stack{min-height:min(84vh,760px)}
-.hero .copy{position:absolute;inset:auto 0 0 0;padding:0 0 64px;
-  background:linear-gradient(transparent,rgba(0,0,0,.55))}
+/* the scrim has to reach the eyebrow, not just the headline: ink tokens are
+   for ink on a surface, and a photograph is not a surface */
+.hero .copy{position:absolute;inset:auto 0 0 0;padding:96px 0 64px;
+  background:linear-gradient(transparent,rgba(0,0,0,.25) 35%,rgba(0,0,0,.68))}
 .hero h1,.hero .intro{color:#fff}
+.hero .cap{color:rgba(255,255,255,.78)}
 
 /* reduced motion and no-JS: drop the moving layer, keep the photograph */
 html.no-js video.media,

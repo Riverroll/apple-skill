@@ -107,11 +107,11 @@ const base = `http://127.0.0.1:${server.address().port}`;
 // follows the rules — a check that only ever passes is not a check.
 const flat = await runAudit(`${base}/example/motion/flat.html`);
 const good = await runAudit(`${base}${PAGE}`);
-const MEDIA = /clip\(s\)|media file\(s\) are served|honours reduced motion|nothing on this page moves/;
+const MEDIA = /clip\(s\)|media file\(s\) are served|honours reduced motion|nothing on this page moves|text sitting on a photograph|paints first|fetchpriority|below the fold/;
 const mediaFindings = (r) => r.findings.filter((f) => MEDIA.test(f.title));
 const titles = (r) => mediaFindings(r).map((f) => f.title).join(" | ");
 
-ok("the audit catches a page whose media is wrong", mediaFindings(flat).length >= 6,
+ok("the audit catches a page whose media is wrong", mediaFindings(flat).length >= 7,
    `${mediaFindings(flat).length} media findings`);
 for (const [what, re] of [
   ["a bare clip with no still", /no still underneath/],
@@ -120,6 +120,7 @@ for (const [what, re] of [
   ["a clip with no accessible name", /no accessible name/],
   ["one render at every width", /served at 1440px and at 500px/],
   ["a clip sitting in bars", /letterboxed inside their slot/],
+  ["an ink token used over a photograph", /mid-tone text sitting on a photograph/],
   ["motion with no reduced-motion rule", /honours reduced motion/],
 ]) ok(`the audit flags ${what}`, re.test(titles(flat)), titles(flat));
 

@@ -297,6 +297,42 @@ function probeFn() {
     where: pathOf(hero),
   } : null;
   out.media.belowFold = { total: below, deferred, custom };
+
+  // Ink tokens are for ink on a surface. Over a photograph the contrast check
+  // above has nothing to measure against, so a muted step disappears into the
+  // picture and nobody notices until they look at it.
+  out.media.inkOverMedia = [];
+  for (const el of document.querySelectorAll("body *")) {
+    let owns = false;
+    for (const n of el.childNodes) if (n.nodeType === 3 && n.textContent.trim()) { owns = true; break; }
+    if (!owns) continue;
+    const b = el.getBoundingClientRect();
+    if (b.width < 8 || b.height < 8 || b.bottom < 0 || b.top > innerHeight) continue;
+    const cs = getComputedStyle(el);
+    // Walk down the paint stack under the text: the first thing that actually
+    // covers the backdrop decides. A picture before any opaque colour means
+    // the text is sitting on the picture — even if a section colour is behind
+    // both of them.
+    const stack = document.elementsFromPoint(b.left + b.width / 2, b.top + Math.min(b.height / 2, 20));
+    let overMedia = false;
+    for (const n of stack.slice(stack.indexOf(el) + 1)) {
+      if (n === document.body || n === document.documentElement) break;
+      if (["IMG", "PICTURE", "VIDEO", "CANVAS"].indexOf(n.tagName) !== -1) { overMedia = true; break; }
+      const ncs = getComputedStyle(n);
+      if (/url\(/.test(ncs.backgroundImage)) { overMedia = true; break; }
+      const bg = rgba(ncs.backgroundColor);
+      if (bg && bg.a > 0.85) break;                 // an opaque surface got there first
+    }
+    if (!overMedia) continue;
+
+    const c = rgba(cs.color);
+    if (!c) continue;
+    const lum = (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b) / 255;
+    const eff = lum * c.a + 0.5 * (1 - c.a);        // unknown backdrop: assume mid
+    if (eff > 0.22 && eff < 0.78)
+      out.media.inkOverMedia.push({ where: pathOf(el), colour: cs.color,
+        size: Math.round(parseFloat(cs.fontSize)) });
+  }
   for (const sheet of document.styleSheets) {
     try {
       for (const r of sheet.cssRules)
@@ -1072,6 +1108,13 @@ if (!useErp) {
     add(7, `the same ${wide.size} media file(s) are served at 1440px and at 500px`,
         [...wide].slice(0, 6).join("  "),
         "Apple re-cuts the crop per breakpoint rather than scaling one render: the same three seconds ship as a 0.88 portrait on phones, a 1.62 on tablets and a 2.06 on desktop. A 16:9 render letterboxed into a phone slot leaves the subject small and centred while the layout around it is full-bleed, which is most of what reads as unfinished. See references/media.md and the art-direction rules in references/imagery.md.");
+
+  const ink = md.inkOverMedia || [];
+  if (ink.length)
+    add(9, `${ink.length} piece(s) of mid-tone text sitting on a photograph`,
+        ink.slice(0, 4).map((t) => `${t.size}px ${t.colour}`).join("  "),
+        "An ink token is ink on a surface: it was picked against a flat colour, and over a picture there is nothing holding it up. Text on media is white or near-black at high alpha, with a scrim that reaches the topmost line — a gradient that starts below the eyebrow leaves the eyebrow invisible. The contrast checks cannot catch this, because the backdrop is an image.",
+        ink.map((t) => t.where).slice(0, 6));
 
   // priority: the still the browser paints first is the page's LCP element
   const hero = md.hero;

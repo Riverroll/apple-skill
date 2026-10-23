@@ -100,6 +100,27 @@ vocabulary even when the ratios above are met — `references/media.md`.
 - **One focal point.** If two elements on a screen are the same size and the
   same weight, the reader's eye picks neither and moves on.
 
+## Text on a picture is not text on a surface
+
+An ink token was picked against a flat colour. Over a photograph there is
+nothing holding it up, and the contrast checks cannot help — the backdrop is an
+image, so there is no value to measure against.
+
+- Text over media is **white, or near-black, at high alpha.** The muted step
+  that reads as "quiet" on a surface reads as "nearly gone" on a picture.
+- **The scrim has to reach the topmost line**, not the headline. A gradient
+  tuned to the 80px type leaves the 12px eyebrow above it sitting on bare
+  photograph, which is the most common version of this mistake and the easiest
+  to miss, because the headline looks fine.
+- A scrim that runs `transparent → 0.25 at 35% → 0.68` covers a three-part
+  lockup without greying the picture. One stop is rarely enough.
+- If the picture is busy enough that even white at full alpha is hard, the
+  answer is a different crop, not a darker scrim. Past about 0.7 the photograph
+  stops being a photograph.
+
+The audit flags mid-tone text whose paint stack reaches a picture before it
+reaches any opaque surface.
+
 ## Sequence: the thing restraint cannot give you
 
 A long page is a sequence, and a sequence has to change pace. Apple's product

@@ -268,7 +268,7 @@ node test/media.mjs                     # the clip ladder, the stack, the fallba
 node test/gallery.mjs                   # the carousel: paddles, dots, keyboard
 ```
 
-306 checks across the seven. `test/media.mjs` is the widest of them: it reads
+307 checks across the seven. `test/media.mjs` is the widest of them: it reads
 the six clip files off disk (moov before mdat, no audio track, inside the byte
 budget, three crops at three aspect ratios), then drives a real browser through
 the markup as parsed, the source the loader picks at 1440px, at 2&times; and at
