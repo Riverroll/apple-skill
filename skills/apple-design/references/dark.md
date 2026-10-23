@@ -133,6 +133,34 @@ What does not work: lowering the image's opacity, or a global `filter:
 brightness(0.8)`. Both make the photograph worse to read while still leaving
 the luminance mismatch.
 
+### A clip has one extra failure here
+
+A `<video>` paints nothing until its first frame decodes, so the handover from
+the still to the clip shows whatever is behind the stack for a frame or two. On
+a light page that is a white flash; on a dark one it is a black hole in the
+middle of a bright photograph. **Give the stack the surface colour it sits on**
+and the handover becomes invisible either way:
+
+```css
+.media-stack { background: var(--surface); }   /* --surface-alt in a dark band */
+```
+
+The other two are the same rules as above, applied to things that are easy to
+forget are images:
+
+- **The start frame gets the same art direction as any photograph on dark.**
+  It is the image most visitors see for longest — it is what ships under
+  `prefers-reduced-motion`, and under a failed load — so a bright frame 0 over
+  a black page is the hole punched in the page, not a loading state.
+- **The still and frame 0 of the clip have to be the same frame.** If the still
+  was exported from a different grade or a different take, the swap flashes.
+  Export it from the encoded file (`ffmpeg -i large.mp4 -frames:v 1`), never
+  from the master.
+
+There is no bitrate surcharge for dark footage — measured, the median cost per
+pixel is slightly *lower* than for bright footage, because what h264 pays for
+is texture and motion. See the table in `references/media.md`.
+
 ## What stays the same
 
 The type scale, the tracking table, the em rhythm, the section padding ladder,

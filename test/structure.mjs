@@ -37,6 +37,7 @@ for (const [what, re] of [
   ["the clip leaves entirely without JS or with reduced motion", /html\.no-js \.media-clip[\s\S]{0,120}display:\s*none/],
   ["the crossfade can drop the outgoing frame", /transition-behavior:\s*allow-discrete/],
   ["the open panel runs off one scalar", /--open[\s\S]{0,200}clip-path:\s*inset\(/],
+  ["the stack has a bed, so the handover cannot flash", /\.media-stack\s*{[^}]*background:\s*var\(--media-bed/],
   ["the stagger is the shipped 150ms", /--staggered-delay:\s*0\.15s/],
   ["the fade outlasts the move", /--staggered-opacity-duration:\s*0\.9s[\s\S]{0,200}--staggered-translate-y-duration:\s*0\.7s/],
   ["the crossfade is asymmetric", /--fade-out:\s*300ms[\s\S]{0,120}--fade-in:\s*600ms/],

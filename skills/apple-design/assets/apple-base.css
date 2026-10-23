@@ -189,7 +189,10 @@ body {
    Every layer sits in one grid cell, so the box keeps its height before the
    video exists and the still underneath is never a placeholder — it is what
    ships when the clip is slow, blocked, or unwanted. */
-.media-stack { display: grid; isolation: isolate; }
+/* the bed shows for the frame or two between the still and the clip's first
+   painted frame — unset it and that handover flashes. A dark band overrides
+   --media-bed; see references/dark.md. */
+.media-stack { display: grid; isolation: isolate; background: var(--media-bed, var(--surface)); }
 /* object-fit goes on the layer AND on anything inside it: a <video> is a layer
    itself, while an <img> sits inside a <picture> layer. Miss either and a clip
    whose aspect does not match its slot sits in bars. */

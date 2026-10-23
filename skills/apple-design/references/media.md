@@ -266,6 +266,28 @@ ffmpeg -i large.mp4 -frames:v 1 -q:v 2 start-large.webp
 Budget: **under 400 KB per 1× clip, under 1 MB at 2×.** A page carrying ten
 clips at those sizes is lighter than one unoptimised hero photograph.
 
+### What actually drives the weight
+
+Measured across fourteen 2026 clips as bits per pixel per frame — the only
+figure that compares a 420×480 clip to a 2520×1224 one:
+
+| | bits/px/frame |
+|---|---|
+| flat graphic motion, large plain areas | 0.014 — 0.02 |
+| product on a plain ground, the common case | 0.04 — 0.09 |
+| textured real footage, handheld, foliage, water | 0.13 — 0.80 |
+
+**Median 0.075, and a 58× spread between the extremes.** The driver is texture
+and motion, not resolution and not duration: the same three seconds cost fifty
+times more if the frame is full of leaves than if it is a phone rotating on
+grey.
+
+Two things follow. A clip that misses the budget is usually asking for a
+simpler frame rather than a lower CRF — shoot or render it against a plain
+ground. And brightness is not the variable people assume: across the same
+sample, dark clips (`YAVG` under 90) run a median 0.073 bpp against 0.083 for
+bright ones. There is no dark-footage surcharge to budget for.
+
 ## The still is the LCP element, so it gets the priority
 
 The clip is lazy by design, which means **the photograph underneath it is what
