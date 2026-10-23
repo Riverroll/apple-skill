@@ -50,8 +50,10 @@ p{font-size:var(--t-body-size);line-height:var(--t-body-line);letter-spacing:var
 
 /* ---- 1. the four-layer stack: every layer in the same grid cell -------- */
 .video-element-stack{display:grid;isolation:isolate}
-.positioned-media-element{grid-area:1/1;width:100%;height:100%}
-.positioned-media-element img,.positioned-media-element video{
+/* the video IS a layer, the img sits inside a <picture> layer — both need the
+   fill, or a 2.06 clip ends up in bars inside a 1.90 slot */
+.positioned-media-element{grid-area:1/1;width:100%;height:100%;object-fit:cover}
+.positioned-media-element :where(img,video){
   display:block;width:100%;height:100%;object-fit:cover}
 .start-frame{z-index:1}
 video.media{z-index:2;opacity:0;transition:opacity 400ms var(--ease-out-soft)}

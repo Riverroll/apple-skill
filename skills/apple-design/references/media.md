@@ -84,6 +84,11 @@ timing tokens, so a new page gets them without copying from this file.
 - The **start-frame is a `<picture>`, not the `poster` attribute.** `poster`
   takes one URL and cannot be art-directed; a `<picture>` gets the same
   per-breakpoint crops as the clip. Frame 0 of the clip, exported as a still.
+- **`object-fit: cover` goes on the layer itself, not only inside it.** A
+  `<video>` *is* a layer; an `<img>` sits inside a `<picture>` layer. A rule
+  written as `.layer img, .layer video` misses the video entirely, and a 2.06
+  clip then sits in bars inside a 1.90 slot. The audit checks for this at every
+  width.
 - **The accessible name lives on the stack**, with `role="img"` and an
   `aria-label` that describes *what happens* in a sentence. The `<video>` and
   the `<img>` are both silent to assistive tech — one name for the whole thing.
@@ -439,6 +444,7 @@ competitor's hero video in your tile is the most visible possible failure.
 | empty box on a slow connection | no start-frame under the video, or no load timeout |
 | tile jumps when media arrives | layers absolutely positioned, so the stack had no height |
 | subject tiny on phone | one 16:9 render letterboxed instead of a portrait crop |
+| bars down both sides of the clip | `object-fit` set on the layer's children but not on the layer, so the `<video>` never got it |
 | page weighs 40 MB | `preload="auto"`, or 2× files served to 1× screens |
 | motion loops forever at the edge of vision | `loop` on a narrative clip; loop only abstract texture |
 | screen reader says "video" | name on the `<video>` instead of `role="img"` on the stack |

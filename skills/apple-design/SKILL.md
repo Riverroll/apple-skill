@@ -196,11 +196,37 @@ Durations by frequency: `250ms` default, `100ms` hover, `400ms` section reveal,
 always the fastest thing on the page.
 
 A reveal of *content* is slower than that and staggers at **150ms** per item —
-0.9s opacity over a 0.7s 30px rise, the shipped tokens. Moving pictures and the
-transitions between stills are a technique of their own, with their own measured
-numbers: `references/media.md`. The short version is that a clip is three
-seconds, silent, re-cropped per breakpoint, has a photograph underneath it, and
-is never scrubbed.
+0.9s opacity over a 0.7s 30px rise, the shipped tokens.
+
+### A clip is a picture that moves
+
+Moving pictures have their own measured numbers in `references/media.md` — read
+it before adding any video or image transition. The shape never changes:
+
+```html
+<div class="media-stack" role="img" aria-label="What happens, in one sentence">
+  <video class="media-layer media-clip" preload="none" muted playsinline
+         data-basepath="/media/hero/"></video>
+  <picture class="media-layer media-still">
+    <source media="(min-width: 780px)" srcset="/media/hero/start-large.webp">
+    <img src="/media/hero/start-small.webp" alt="" width="420" height="480">
+  </picture>
+</div>
+```
+
+Three seconds, silent, **no audio stream at all**, re-cropped per breakpoint
+(0.88 portrait / 1.62 / 2.06 at 1260px), six files per clip, under 400 KB at
+1&times;. Empty `src` and `preload="none"`: the loader writes the file in one
+and a half viewports early, plays half a viewport early, and never pauses on
+exit. A `<picture>` of frame 0 is underneath in the same grid cell, so a slow
+connection, a blocked request or `prefers-reduced-motion` lands on a
+photograph — under that preference the clip is **not fetched at all**, not
+paused. One accessible name on the stack, none on the layers.
+
+Never scrub these with `currentTime`: they ship as a single GOP, so every seek
+decodes from frame 0. That is the stutter. `assets/apple-base.css` carries the
+stack, the crossfade and the timing tokens; `tools/make-clip.sh` builds the
+six-file ladder from a master or a photograph.
 
 ### Parallax is CSS, not a scroll handler
 

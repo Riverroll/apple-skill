@@ -12,7 +12,8 @@
     · autoplay loop with no muted and no playsinline — a phone refuses it
     · preload="auto": every byte fetched at page load, nothing lazy
     · no accessible name anywhere near it
-    · one render served to every width, letterboxed on a phone
+    · one render served to every width, and object-fit: contain, so it is
+      letterboxed in its own slot as well
     · no prefers-reduced-motion rule in the stylesheet at all
 -->
 <style>
@@ -42,7 +43,7 @@ p{font-size:var(--t-body-size);line-height:var(--t-body-line);letter-spacing:var
 .cap{font-size:var(--t-cap-size);line-height:var(--t-cap-line);letter-spacing:var(--t-cap-track);
   color:var(--ink-muted);text-transform:uppercase}
 .hero{position:relative;color:#fff;background:#1a1512;overflow:hidden}
-.hero video{display:block;width:100%;height:min(84vh,760px);object-fit:cover}
+.hero video{display:block;width:100%;height:min(84vh,760px);object-fit:contain}
 .hero .copy{position:absolute;inset:auto 0 0 0;padding:0 0 64px;
   background:linear-gradient(transparent,rgba(0,0,0,.55))}
 .hero h1,.hero .intro{color:#fff}

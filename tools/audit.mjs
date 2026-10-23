@@ -264,6 +264,8 @@ function probeFn() {
       named: !!(v.getAttribute("aria-label") || v.getAttribute("title")),
       stackNamed: !!(v.closest("[role=img][aria-label]")),
       w: v.videoWidth, h: v.videoHeight,
+      boxW: Math.round(b.width), boxH: Math.round(b.height),
+      fit: getComputedStyle(v).objectFit,
       src: (v.currentSrc || v.getAttribute("src") || "").split("/").pop(),
       where: pathOf(v),
     });
@@ -1025,6 +1027,20 @@ if (!useErp) {
         unnamed.map((c) => c.src || "clip").join("  "),
         'A clip is a picture that moves, so it gets one name for the whole thing: role="img" and an aria-label on the stack that wraps the video and its still, describing what happens in a sentence. Naming the <video> itself announces a player nobody can operate.',
         unnamed.map((c) => c.where).filter(Boolean));
+
+  // A clip pillarboxed inside its slot: the subject ends up small and centred
+  // while the layout around it is full-bleed. Checked at every width, because
+  // the usual version of this is a desktop render dropped into a phone slot.
+  const atWidth = WIDTHS.flatMap((w) => (((byWidth[w] || {}).media || {}).clips || [])
+    .map((c) => ({ ...c, at: w })));
+  const boxed = atWidth.filter((c) => c.w && c.h && c.boxW && c.boxH &&
+    c.fit !== "cover" &&
+    Math.abs((c.w / c.h) / (c.boxW / c.boxH) - 1) > 0.25);
+  if (boxed.length)
+    add(8, `${boxed.length} clip(s) letterboxed inside their slot`,
+        boxed.map((c) => `${c.at}px: ${c.src || "clip"} ${c.w}x${c.h} in ${c.boxW}x${c.boxH} (object-fit: ${c.fit})`).join("  "),
+        "The file's aspect and the box's aspect disagree by more than a quarter, and object-fit is not cover — so the clip is sitting in bars. Apple re-cuts the crop to the slot instead: the same three seconds ship at 0.88 on phones, 1.62 on tablets and 2.06 on desktop. Either cut a crop that matches this box or let it fill with object-fit: cover and accept the trim. See references/media.md.",
+        boxed.map((c) => c.where).filter(Boolean));
 
   // art direction: the same files at 1440 and at 500 means one render stretched
   const wide = new Set(md.srcs || []), thin = new Set(narrow.srcs || []);

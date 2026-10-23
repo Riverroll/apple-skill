@@ -111,7 +111,7 @@ const MEDIA = /clip\(s\)|media file\(s\) are served|honours reduced motion|nothi
 const mediaFindings = (r) => r.findings.filter((f) => MEDIA.test(f.title));
 const titles = (r) => mediaFindings(r).map((f) => f.title).join(" | ");
 
-ok("the audit catches a page whose media is wrong", mediaFindings(flat).length >= 5,
+ok("the audit catches a page whose media is wrong", mediaFindings(flat).length >= 6,
    `${mediaFindings(flat).length} media findings`);
 for (const [what, re] of [
   ["a bare clip with no still", /no still underneath/],
@@ -119,6 +119,7 @@ for (const [what, re] of [
   ["eager preloading", /preload="auto"/],
   ["a clip with no accessible name", /no accessible name/],
   ["one render at every width", /served at 1440px and at 500px/],
+  ["a clip sitting in bars", /letterboxed inside their slot/],
   ["motion with no reduced-motion rule", /honours reduced motion/],
 ]) ok(`the audit flags ${what}`, re.test(titles(flat)), titles(flat));
 
@@ -244,7 +245,7 @@ try {
     const cs = getComputedStyle(stack);
     return {
       muted: v.muted, inline: v.playsInline,
-      grid: cs.display,
+      grid: cs.display, fit: getComputedStyle(v).objectFit,
       sameCell: getComputedStyle(v).gridArea === getComputedStyle(stack.querySelector("picture")).gridArea,
       stackRole: stack.getAttribute("role"), stackName: stack.getAttribute("aria-label") || "",
       videoNamed: !!(v.getAttribute("aria-label") || v.getAttribute("title")),
@@ -254,6 +255,8 @@ try {
 
   ok("the video is muted and inline", m.muted && m.inline, "iOS refuses to render it inline otherwise");
   ok("the stack is a grid", m.grid === "grid", m.grid);
+  ok("the clip fills its slot", m.fit === "cover",
+     `object-fit: ${m.fit} — a video is a layer itself, so the fill has to be on it`);
   ok("the layers share one cell", m.sameCell, "absolutely positioned layers leave the stack with no height");
   ok("one accessible name, on the stack", m.stackRole === "img" && m.stackName.length > 20,
      `role=${m.stackRole} name=${m.stackName.length} chars`);

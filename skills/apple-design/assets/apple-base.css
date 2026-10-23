@@ -190,7 +190,10 @@ body {
    video exists and the still underneath is never a placeholder — it is what
    ships when the clip is slow, blocked, or unwanted. */
 .media-stack { display: grid; isolation: isolate; }
-.media-layer { grid-area: 1 / 1; width: 100%; height: 100%; }
+/* object-fit goes on the layer AND on anything inside it: a <video> is a layer
+   itself, while an <img> sits inside a <picture> layer. Miss either and a clip
+   whose aspect does not match its slot sits in bars. */
+.media-layer { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: cover; }
 .media-layer :where(img, video) { display: block; width: 100%; height: 100%; object-fit: cover; }
 .media-still { z-index: 1; }
 .media-clip  { z-index: 2; opacity: 0; transition: opacity 400ms var(--ease-out-soft); }

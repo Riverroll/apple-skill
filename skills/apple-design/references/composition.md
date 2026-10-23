@@ -72,6 +72,18 @@ If a page has no step 1–3 available, that is a content problem, not a design
 problem, and it has to be solved as one. See `references/imagery.md` for
 finding and making real images, including when the project arrives with none.
 
+**Motion does not move a subject up this list.** A three-second clip of the
+real thing is step 1 and the strongest thing on a product page; a three-second
+clip of a gradient is still step 4, and animating it makes it a step 4 that
+also costs 300 KB. The order is about what is being shown, never about whether
+it moves.
+
+What motion *does* change is the count: a flagship apple.com product page
+carries 6 to 14 short clips against 110 to 204 stills, so roughly one section
+in three has something moving in it. A category page carries none. If every
+screen on a product page is frozen, the page is missing a third of the
+vocabulary even when the ratios above are met — `references/media.md`.
+
 ## Composition inside a screen
 
 - **Give the subject a side.** Apple's full-bleed media is either centered with
