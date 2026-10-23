@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kilauea &middot; moving pictures</title>
+<!--
+  The four techniques in references/media.md, each on real public-domain
+  footage: the four-layer clip stack, the asymmetric crossfade, the clip-path
+  open, and the staggered reveal. Clips built with tools/make-clip.sh from the
+  photographs in ../media — see ../CREDITS.md.
+
+  Everything here resolves to something visible with JS off and with
+  reduced-motion on. Run test/media.mjs against it.
+-->
+<style>
+:root {
+  --ink:#1d1d1f; --ink-secondary:#57575c; --ink-muted:#6e6e73;
+  --surface:#ffffff; --surface-alt:#f5f3f0; --hairline:#e6e2dc;
+  --accent:#9c4a1a; --on-accent:#fff;
+  --radius-card:28px; --radius-tile:12px;
+  --ease-standard:cubic-bezier(.4,0,.6,1); --ease-out-soft:cubic-bezier(0,0,.5,1);
+  --ease-product:cubic-bezier(.42,0,.1,1);
+
+  --t-hero-size:80px;  --t-hero-line:1.05;  --t-hero-track:-0.015em;
+  --t-head-size:48px;  --t-head-line:1.0834933333; --t-head-track:-0.003em;
+  --t-intro-size:21px; --t-intro-line:1.381002381;  --t-intro-track:0.011em;
+  --t-body-size:17px;  --t-body-line:1.4705882353;  --t-body-track:-0.022em;
+  --t-cap-size:12px;   --t-cap-line:1.3333733333;   --t-cap-track:-0.01em;
+
+  /* the shipped StaggeredFadeIn tokens, unchanged */
+  --staggered-delay:0.15s; --staggered-opacity-duration:0.9s;
+  --staggered-translate-y:30px; --staggered-translate-y-duration:0.7s;
+
+  /* the shipped crossfade: out fast, in slow, with a hold between them */
+  --fade-out:300ms; --fade-out-delay:0ms;
+  --fade-in:600ms;  --fade-in-delay:250ms;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.col{max-width:1068px;margin:0 auto;padding-inline:24px}
+section{padding-block:120px}
+h1,h2{margin:0 0 .4em;font-weight:600}
+h1{font-size:var(--t-hero-size);line-height:var(--t-hero-line);letter-spacing:var(--t-hero-track)}
+h2{font-size:var(--t-head-size);line-height:var(--t-head-line);letter-spacing:var(--t-head-track)}
+p{font-size:var(--t-body-size);line-height:var(--t-body-line);letter-spacing:var(--t-body-track);
+  color:var(--ink-secondary);max-width:40em}
+.intro{font-size:var(--t-intro-size);line-height:var(--t-intro-line);letter-spacing:var(--t-intro-track)}
+.cap{font-size:var(--t-cap-size);line-height:var(--t-cap-line);letter-spacing:var(--t-cap-track);
+  color:var(--ink-muted);text-transform:uppercase}
+
+/* ---- 1. the four-layer stack: every layer in the same grid cell -------- */
+.video-element-stack{display:grid;isolation:isolate}
+.positioned-media-element{grid-area:1/1;width:100%;height:100%}
+.positioned-media-element img,.positioned-media-element video{
+  display:block;width:100%;height:100%;object-fit:cover}
+.start-frame{z-index:1}
+video.media{z-index:2;opacity:0;transition:opacity 400ms var(--ease-out-soft)}
+video.media.is-playing{opacity:1}          /* the still shows until a frame exists */
+
+.hero{position:relative;color:#fff;background:#1a1512;overflow:hidden}
+.hero .video-element-stack{min-height:min(84vh,760px)}
+.hero .copy{position:absolute;inset:auto 0 0 0;padding:0 0 64px;
+  background:linear-gradient(transparent,rgba(0,0,0,.55))}
+.hero h1,.hero .intro{color:#fff}
+
+/* reduced motion and no-JS: drop the moving layer, keep the photograph */
+html.no-js video.media,
+html.reduced-motion video.media{display:none}
+
+/* ---- 2. the asymmetric crossfade -------------------------------------- */
+.frames{display:grid;border-radius:var(--radius-card);overflow:hidden;background:var(--surface-alt)}
+.frame{grid-area:1/1;opacity:1;
+  transition:opacity var(--fade-out) ease-in-out var(--fade-out-delay),
+             display var(--fade-in) ease-in-out var(--fade-in-delay);
+  transition-behavior:allow-discrete}
+.frame img{display:block;width:100%;height:100%;object-fit:cover;aspect-ratio:3/2}
+.frame[hidden]{display:none;opacity:0}
+.frame[data-current]{opacity:1;
+  transition:opacity var(--fade-in) ease-in-out var(--fade-in-delay);
+  transition-behavior:allow-discrete}   /* the shorthand above resets it */
+.dots{display:flex;gap:8px;justify-content:center;margin-top:24px;padding:0;list-style:none}
+.dots button{width:8px;height:8px;padding:0;border:0;border-radius:50%;
+  background:var(--hairline);cursor:pointer;transition:background 100ms var(--ease-standard)}
+.dots button[aria-current="true"]{background:var(--ink)}
+:where(a,button):focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* ---- 3. the clip-path open: one scalar drives inset and radius --------- */
+.open-panel{--open:0;
+  clip-path:inset(0 calc((1 - var(--open)) * 6.25vw)
+            round calc((1 - var(--open)) * var(--radius-card)))}
+.open-panel img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+/* loud, quiet, loud: the sections are deliberately not the same height */
+.open-section{padding-block:200px}
+.read-section{padding-block:72px}
+@media (prefers-reduced-motion:reduce){.open-panel{--open:1}}
+
+/* ---- 4. the staggered reveal ------------------------------------------ */
+.grid{display:grid;gap:24px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  margin-top:48px;padding:0;list-style:none}
+.grid li{border-radius:var(--radius-tile);overflow:hidden;background:var(--surface-alt)}
+.grid img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover}
+.grid figcaption{padding:16px 20px 20px}
+html.enhance-xp [data-staggered-item]{opacity:0;
+  translate:0 var(--staggered-translate-y);
+  transition:opacity var(--staggered-opacity-duration) var(--ease-out-soft)
+               calc(min(var(--i),6) * var(--staggered-delay)),
+             translate var(--staggered-translate-y-duration) var(--ease-out-soft)
+               calc(min(var(--i),6) * var(--staggered-delay))}
+html.enhance-xp [data-staggered].is-in [data-staggered-item]{opacity:1;translate:none}
+
+@media (max-width:734px){
+  :root{--t-hero-size:40px;--t-head-size:32px;--t-intro-size:19px}
+  section{padding-block:80px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:1ms!important;transition-duration:1ms!important}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <!-- The name is on the stack, not on the video: a clip is a picture that
+       moves, so it gets one description for the whole thing. -->
+  <div class="video-element-stack" role="img"
+       aria-label="Lava fountains at Kilauea's summit crater at night, the glow pushing steam up through the dark">
+    <video class="positioned-media-element media" preload="none" muted playsinline
+           data-basepath="../media/summit/" data-ladder="small,medium,large"></video>
+    <picture class="positioned-media-element start-frame">
+      <source media="(min-width:780px)" srcset="../media/summit/start-large.webp">
+      <source media="(min-width:570px)" srcset="../media/summit/start-medium.webp">
+      <img src="../media/summit/start-small.webp" alt="" width="420" height="480">
+    </picture>
+  </div>
+  <div class="copy"><div class="col">
+    <p class="cap">Hawai&#699;i Volcanoes</p>
+    <h1>Three seconds.<br>Then it holds still.</h1>
+    <p class="intro">One clip, six files, three crops. The photograph underneath
+      is the page if anything goes wrong.</p>
+  </div></div>
+</header>
+
+<section class="col">
+  <h2>One replaces the other.</h2>
+  <p>The outgoing frame leaves in 300ms. The incoming one takes 600ms and waits
+    250ms before starting, so you never see both at half strength.</p>
+  <div class="frames" data-crossfade>
+    <div class="frame" data-current><img src="../media/slide-fountain.webp" alt="A lava fountain breaking the surface of the crater floor"></div>
+    <div class="frame" hidden><img src="../media/slide-curtain.webp" alt="A curtain of fire along a fissure vent"></div>
+    <div class="frame" hidden><img src="../media/slide-vent.webp" alt="Steam and gas rising from an active vent"></div>
+    <div class="frame" hidden><img src="../media/slide-sea.webp" alt="A lava flow entering the sea in a cloud of steam"></div>
+  </div>
+  <ul class="dots" data-crossfade-nav></ul>
+</section>
+
+<section class="open-section">
+  <div class="col"><h2>It opens as you arrive.</h2>
+    <p>One scalar runs 0&nbsp;&rarr;&nbsp;1 across the scroll and drives the side
+      inset and the corner radius together. Reduced motion pins it at 1.</p></div>
+  <div class="open-panel" data-open-panel>
+    <img src="../media/band-2400.webp" alt="The caldera rim at dawn, steam along its length">
+  </div>
+</section>
+
+<section class="col read-section">
+  <h2>What this page is doing.</h2>
+  <p>Four techniques, each measured off apple.com's own shipped assets rather
+    than guessed at. The clip above is three seconds long, has no audio track,
+    and exists as six files: a 0.88 portrait crop for phones, a 1.62 for
+    tablets and a 2.06 for desktop, each at 1&times; and 2&times;. The desktop
+    file is 1260&nbsp;pixels wide and weighs 308&nbsp;KB &mdash; less than the
+    photograph sitting underneath it would cost at the same width twice over.</p>
+  <p>Nothing is fetched when the page loads. The <code>src</code> is empty and
+    <code>preload</code> is <code>none</code>; the loader writes the file in
+    when the clip is still one and a half viewports away, starts playback half
+    a viewport early, and then leaves it alone &mdash; a clip that has started
+    is never paused because you scrolled past it. If the file has not produced
+    metadata before the timeout, the loader removes the video element outright
+    and the photograph it was covering becomes the page. That is the whole
+    fallback strategy: there is no spinner and no empty box, because the still
+    was never a placeholder.</p>
+  <p>With <em>reduced motion</em> set, none of it runs. The clip is not fetched
+    and not merely paused, the moving layer leaves the layout, and the panel
+    above sits pinned open at its final state. With scripting off, the same
+    thing: the markup already contains every photograph, and the only rule that
+    hides anything is gated on a class that script adds.</p>
+</section>
+
+<section class="col">
+  <h2>Dealt out, not flashed in.</h2>
+  <p>150ms per item, a 0.9s fade over a 0.7s 30px rise. The fade outlasts the
+    move, so each tile has arrived before it finishes settling.</p>
+  <ul class="grid" data-staggered>
+    <li data-staggered-item style="--i:0"><figure style="margin:0">
+      <img src="../media/card-summit.webp" alt="The summit caldera from the north rim">
+      <figcaption><p class="cap">Summit</p><p>Halema&#699;uma&#699;u, after the collapse.</p></figcaption></figure></li>
+    <li data-staggered-item style="--i:1"><figure style="margin:0">
+      <img src="../media/card-rift.webp" alt="The east rift zone cutting through forest">
+      <figcaption><p class="cap">East rift</p><p>Where the ground opened in 2018.</p></figcaption></figure></li>
+    <li data-staggered-item style="--i:2"><figure style="margin:0">
+      <img src="../media/card-sample.webp" alt="A geologist taking a molten sample from a flow">
+      <figcaption><p class="cap">Fieldwork</p><p>A sample, taken at 1150&nbsp;&deg;C.</p></figcaption></figure></li>
+  </ul>
+</section>
+
+<script>
+// Everything below is an enhancement. The page is complete without it: the
+// stills are in the markup, the panel is open at --open:0 as a rounded card,
+// and the grid is visible because the hiding rule is gated on .enhance-xp.
+const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+if (reduced.matches) document.documentElement.classList.add("reduced-motion");
+else document.documentElement.classList.add("enhance-xp");
+
+// --- 1. the clip: breakpoint ladder, lazy, plays early, never pauses on exit
+const MEDIA_BP = { small: 0, medium: 570, large: 780, xlarge: 1280 };
+// A component ships whatever crops it has; this one stops at large, so the
+// xlarge breakpoint maps back down to it rather than asking for a file that
+// does not exist. Apple's own breakpoint map does the same.
+const pick = (have) => {
+  let name = "small";
+  for (const [k, v] of Object.entries(MEDIA_BP)) if (innerWidth >= v && have.includes(k)) name = k;
+  return name + (devicePixelRatio > 1 ? "_2x" : "");
+};
+
+for (const v of document.querySelectorAll("video[data-basepath]")) {
+  if (reduced.matches) continue;                       // a still, not a paused clip
+  const stack = v.closest(".video-element-stack");
+  const have = (v.dataset.ladder || "small,medium,large").split(",");
+
+  new IntersectionObserver(([e], io) => {              // download: ~1.5 viewports early
+    if (!e.isIntersecting) return;
+    io.disconnect();
+    v.src = v.dataset.basepath + pick(have) + ".mp4";
+    // slow network keeps the photograph: give up and remove the element, as
+    // apple.com's loader does. Their default is 30s; a hero sets 3s.
+    const bail = setTimeout(() => v.remove(), Number(v.dataset.loadTimeout) || 30000);
+    v.addEventListener("loadedmetadata", () => clearTimeout(bail), { once: true });
+    v.addEventListener("loadeddata", () => v.classList.add("is-playing"), { once: true });
+  }, { rootMargin: "150% 0px" }).observe(stack);
+
+  new IntersectionObserver(([e]) => {                  // play: half a viewport early
+    if (e.isIntersecting) v.play().catch(() => {});
+  }, { rootMargin: "50% 0px" }).observe(stack);
+
+  // a resize across a breakpoint swaps the file and resumes where it was
+  addEventListener("resize", () => {
+    const next = v.dataset.basepath + pick(have) + ".mp4";
+    if (!v.src || v.src.endsWith(next)) return;
+    const was = !v.paused, t = v.currentTime;
+    v.src = next + "#t=" + t;
+    if (was) v.play().catch(() => {});
+  }, { passive: true });
+}
+
+// --- 2. the crossfade, with a dot per frame
+for (const group of document.querySelectorAll("[data-crossfade]")) {
+  const frames = [...group.children];
+  const nav = group.parentElement.querySelector("[data-crossfade-nav]");
+  const show = (i) => frames.forEach((f, n) => {
+    f.hidden = n !== i;
+    f.toggleAttribute("data-current", n === i);
+    nav.children[n].firstElementChild.setAttribute("aria-current", String(n === i));
+  });
+  frames.forEach((f, i) => {
+    const li = document.createElement("li");
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("aria-label", "Frame " + (i + 1));
+    b.addEventListener("click", () => show(i));
+    li.append(b); nav.append(li);
+  });
+  show(0);
+}
+
+// --- 3. the clip-path open, one scalar written once per frame
+const panels = [...document.querySelectorAll("[data-open-panel]")];
+if (panels.length && !reduced.matches) {
+  let queued = false;
+  const write = () => {
+    queued = false;
+    for (const p of panels) {
+      const r = p.getBoundingClientRect();
+      // 0 while it is still a viewport away, 1 once its top reaches 40% up
+      const t = (innerHeight - r.top) / (innerHeight * 0.6);
+      p.style.setProperty("--open", Math.min(1, Math.max(0, t)).toFixed(3));
+    }
+  };
+  addEventListener("scroll", () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(write);
+  }, { passive: true });
+  write();
+}
+
+// --- 4. reveal once, then stop watching
+const io = new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    if (!e.isIntersecting) continue;
+    e.target.classList.add("is-in");
+    io.unobserve(e.target);
+  }
+}, { rootMargin: "0px 0px -15% 0px" });
+for (const g of document.querySelectorAll("[data-staggered]")) io.observe(g);
+</script>
+</body></html>

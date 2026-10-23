@@ -241,6 +241,47 @@ function probeFn() {
     const pt = Math.round(parseFloat(cs.paddingTop));
     if (pt > 0) bump(out.sectionPad, pt + "px");
   }
+
+  // ------------------------------------------------------------- the media
+  // Moving pictures are a third of what a visitor sees on a product page, and
+  // they fail in ways that are countable: a clip with nothing underneath it, a
+  // clip the browser will refuse to play inline, one render letterboxed into
+  // every width. See references/media.md.
+  out.media = { clips: [], srcs: [], reducedMotionRule: false, moving: 0 };
+  for (const v of document.querySelectorAll("video")) {
+    const b = v.getBoundingClientRect();
+    if (b.width < 4 || b.height < 4) continue;
+    // a still "underneath" means in the same box, not merely nearby
+    const parent = v.parentElement;
+    const still = !!(v.getAttribute("poster") ||
+      (parent && [...parent.querySelectorAll("img, picture")].some((n) => {
+        const r = n.getBoundingClientRect();
+        return r.width > b.width * 0.6 && r.height > b.height * 0.6;
+      })));
+    out.media.clips.push({
+      still, muted: v.muted, inline: v.playsInline, preload: v.preload,
+      autoplay: v.hasAttribute("autoplay"), loop: v.loop,
+      named: !!(v.getAttribute("aria-label") || v.getAttribute("title")),
+      stackNamed: !!(v.closest("[role=img][aria-label]")),
+      w: v.videoWidth, h: v.videoHeight,
+      src: (v.currentSrc || v.getAttribute("src") || "").split("/").pop(),
+      where: pathOf(v),
+    });
+  }
+  for (const n of document.querySelectorAll("img, video, source")) {
+    const u = n.currentSrc || n.getAttribute("src") || "";
+    if (u) out.media.srcs.push(u.split("/").pop());
+  }
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const r of sheet.cssRules)
+        if (r.conditionText && /prefers-reduced-motion/.test(r.conditionText)) out.media.reducedMotionRule = true;
+    } catch (e) { /* cross-origin sheet */ }
+  }
+  for (const el of document.querySelectorAll("body *")) {
+    const cs = getComputedStyle(el);
+    if (parseFloat(cs.transitionDuration) > 0 || cs.animationName !== "none") out.media.moving++;
+  }
   return JSON.stringify(out);
 }
 
@@ -949,6 +990,62 @@ if (!useErp && sl.screens) {
         sl.tells);
 }
 
+// ------------------------------------------------------------------- media
+// Moving pictures fail in countable ways. These run on a page, not on a tool:
+// an ERP has no business carrying a hero clip. references/media.md.
+if (!useErp) {
+  const md = d.media || { clips: [], srcs: [], moving: 0 };
+  const clips = md.clips || [];
+  const narrow = (byWidth[WIDTHS[WIDTHS.length - 1]] || {}).media || { srcs: [] };
+
+  const noStill = clips.filter((c) => !c.still);
+  if (noStill.length)
+    add(9, `${noStill.length} clip(s) with no still underneath`,
+        noStill.map((c) => c.src || "(no src)").join("  "),
+        "apple.com never ships a bare <video>. A <picture> of frame 0 sits in the same grid cell, so a slow connection, a failed load or a reduced-motion preference lands on a photograph instead of an empty box. The poster attribute is not enough on its own — it takes one URL and cannot be art-directed. See references/media.md.",
+        noStill.map((c) => c.where).filter(Boolean));
+
+  const refuses = clips.filter((c) => !c.muted || !c.inline);
+  if (refuses.length)
+    add(10, `${refuses.length} clip(s) a phone will refuse to play inline`,
+        refuses.map((c) => `${c.src || "clip"}${c.muted ? "" : " not muted"}${c.inline ? "" : " not playsinline"}`).join("  "),
+        "iOS renders an inline video only when it is muted and carries playsinline. Without both it either does nothing or takes over the screen. Apple's own markup sets both on every anim clip, and the files have no audio track at all.",
+        refuses.map((c) => c.where).filter(Boolean));
+
+  const eager = clips.filter((c) => c.preload === "auto");
+  if (eager.length)
+    add(6, `${eager.length} clip(s) with preload="auto"`,
+        eager.map((c) => c.src || "clip").join("  "),
+        'apple.com ships preload="none" with an empty src and writes the file in only when the scroll window opens — two viewports ahead of the clip, not at page load. A product page with fourteen clips downloads none of them up front. See references/media.md.',
+        eager.map((c) => c.where).filter(Boolean));
+
+  const unnamed = clips.filter((c) => !c.named && !c.stackNamed);
+  if (unnamed.length)
+    add(7, `${unnamed.length} clip(s) with no accessible name`,
+        unnamed.map((c) => c.src || "clip").join("  "),
+        'A clip is a picture that moves, so it gets one name for the whole thing: role="img" and an aria-label on the stack that wraps the video and its still, describing what happens in a sentence. Naming the <video> itself announces a player nobody can operate.',
+        unnamed.map((c) => c.where).filter(Boolean));
+
+  // art direction: the same files at 1440 and at 500 means one render stretched
+  const wide = new Set(md.srcs || []), thin = new Set(narrow.srcs || []);
+  const shared = [...wide].filter((u) => thin.has(u));
+  if (wide.size >= 3 && shared.length === wide.size && wide.size === thin.size)
+    add(7, `the same ${wide.size} media file(s) are served at 1440px and at 500px`,
+        [...wide].slice(0, 6).join("  "),
+        "Apple re-cuts the crop per breakpoint rather than scaling one render: the same three seconds ship as a 0.88 portrait on phones, a 1.62 on tablets and a 2.06 on desktop. A 16:9 render letterboxed into a phone slot leaves the subject small and centred while the layout around it is full-bleed, which is most of what reads as unfinished. See references/media.md and the art-direction rules in references/imagery.md.");
+
+  if (md.moving > 0 && !md.reducedMotionRule)
+    add(8, `${md.moving} element(s) animate and nothing honours reduced motion`,
+        "no @media (prefers-reduced-motion) rule in any stylesheet the page can read",
+        "With the preference set, apple.com does not slow its clips down — it never fetches them, drops the moving layer out of the layout and loads a still in its place. At minimum, clamp durations in a prefers-reduced-motion block. See references/media.md.");
+
+  // the inverse: a product page where nothing moves at all
+  if (!clips.length && md.moving === 0 && (sl.screens || 0) >= 3)
+    add(8, "nothing on this page moves",
+        `${md.moving} element(s) carry a transition or an animation, and there are no clips`,
+        "A flagship product page on apple.com carries 6 to 14 short clips against 110 to 204 stills — roughly one clip per two or three sections, about 260 KB each. A category page carries none, and is right to. If this is a product page, it is missing a third of the vocabulary: references/media.md has the ffmpeg recipes and tools/make-clip.sh builds the ladder.");
+}
+
 findings.sort((a, b) => b.weight - a.weight);
 
 // ------------------------------------------------------------------ output
@@ -959,6 +1056,10 @@ const summary = {
   stickyBlocked: d.stickyBlocked.length, stickyScoped: (d.stickyScoped || []).length, stickyOk: d.stickyOk,
   contrastFails: d.contrast.length, dimmed: d.dimmed.length, nodes: d.nodes,
   mode: useErp ? "erp" : "page", dense: !!looksDense,
+  clips: ((d.media || {}).clips || []).length,
+  clipsNoStill: ((d.media || {}).clips || []).filter((c) => !c.still).length,
+  moving: (d.media || {}).moving ?? 0,
+  reducedMotionRule: (d.media || {}).reducedMotionRule ?? null,
   mediaShare: sl.media ?? null, flatShare: sl.flat ?? null, textShare: sl.text ?? null,
   screens: sl.screens ?? 0, deadScreens: sl.deadScreens ?? 0,
   scaleContrast: sl.scaleContrast ?? 0, mediaCount: sl.mediaCount ?? 0,

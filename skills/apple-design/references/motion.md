@@ -9,7 +9,15 @@
 --ease-overshoot: cubic-bezier(0.3, 2, 0.5, 1);      /* pop; sparingly */
 --ease-dramatic:  cubic-bezier(0.53, -0.01, 0.17, 1);/* long scroll-linked moves */
 --ease-in-out:    cubic-bezier(0.42, 0, 0.58, 1);    /* symmetric loops */
+--ease-product:   cubic-bezier(0.42, 0, 0.1, 1);     /* 2026 product pages */
 ```
+
+Measured by occurrence across 739 stylesheets in the mirror: `--ease-standard`
+is **38%** of every `cubic-bezier` on the site and `--ease-out-sharp` is **19%**
+— between them, more than half of all motion. `--ease-product` does not appear
+in that ranking at all, yet it is the most-used curve on the 2026 product pages
+specifically: a long slow-out that only reads well over 400ms or more. Use it
+for section-scale moves, not for UI.
 
 `--ease-standard` is symmetric-ish and used for most transitions.
 `--ease-out-soft` starts instantly and settles — it is what makes revealed
@@ -65,47 +73,43 @@ Children of a revealed group animate in sequence by index, via a CSS variable
 set on each child:
 
 ```css
-.stagger-item { transition-delay: calc(var(--i) * 60ms); }
+.stagger-item { transition-delay: calc(var(--i) * 150ms); }
 ```
 
 ```js
 group.querySelectorAll(".stagger-item").forEach((el, i) => el.style.setProperty("--i", i));
 ```
 
-60–80ms per step. Beyond about six items the total delay becomes noticeable —
-cap the multiplier: `calc(min(var(--i), 6) * 60ms)`.
+**150ms per step** for a reveal of content — that is the shipped value, identical
+on all seven 2026 product pages that use the component, alongside a 0.9s opacity
+and a 0.7s 30px rise. At 60ms a six-item row reads as one block flashing in; at
+150ms you see the items dealt out one at a time.
 
-## Scroll-linked video
+60–80ms is the right step for a *small UI list* — menu items, a dropdown, chips —
+where the whole sequence has to finish inside a single interaction.
 
-Apple's signature hero effect is a muted inline video whose *currentTime* is
-driven by scroll position, so the product animates as you scroll:
+Beyond about six items the total delay becomes noticeable either way — cap the
+multiplier: `calc(min(var(--i), 6) * 150ms)`. Full tokens in
+`references/media.md`.
 
-```js
-const v = document.querySelector("video");
-v.muted = true; v.playsInline = true; v.preload = "auto";
+## Video — read `references/media.md`
 
-let ticking = false;
-addEventListener("scroll", () => {
-  if (ticking) return;
-  ticking = true;
-  requestAnimationFrame(() => {
-    const r = section.getBoundingClientRect();
-    const p = Math.min(1, Math.max(0, -r.top / (r.height - innerHeight)));
-    if (v.duration) v.currentTime = p * v.duration;
-    ticking = false;
-  });
-}, { passive: true });
-```
+The signature effect is **not** a scroll-scrubbed video. Measured across the
+2026 product pages, Apple's unit of motion is a 3-second silent clip,
+single-GOP, re-cropped per breakpoint, that starts playing one viewport before
+it is on screen and is never paused on exit. Scrubbing a clip like that with
+`currentTime` is what makes hand-built versions stutter, because a
+single-keyframe file decodes from frame 0 on every seek.
 
-Requirements that are easy to miss:
-- `muted` and `playsInline`, or mobile browsers refuse to render it inline.
-- Encode with a **short GOP** (keyframe every ~0.5s). Seeking to an arbitrary
-  `currentTime` decodes from the nearest keyframe; a default 250-frame GOP makes
-  scrubbing visibly stutter. Apple ships roughly `-g 75` at CRF 30, no audio.
-- `-movflags +faststart` so the moov atom is first and the video is seekable
-  before it has fully downloaded.
-- Always `{ passive: true }` on the scroll listener, and always coalesce into
-  `requestAnimationFrame` — one `currentTime` write per frame, never per event.
+`references/media.md` has the whole thing: the measured source ladder, the
+four-layer stack with the still underneath, the load and play windows, the
+ffmpeg recipes, the reduced-motion path, and the four image-transition
+techniques. **Read it before putting any video or image transition on a page.**
+
+Scrubbing remains a real technique for "the product rotates as I scroll", and
+it needs its own encode (`-g 15` at 30fps, ~4× the bytes) plus one
+`currentTime` write per `requestAnimationFrame`. It is the expensive option;
+reach for the pinned section below first.
 
 ## Parallax and scroll-linked sections
 

@@ -21,6 +21,27 @@ and re-encoded to WebP. Nothing is hotlinked. The crop is the only alteration.
 | `slide-sea.webp` | [USGS Kīlauea multimediaFile-2066](https://commons.wikimedia.org/wiki/File:USGS_K%C4%ABlauea_multimediaFile-2066.jpg) | U.S. Geological Survey | Public domain |
 | `slide-vent.webp` | [Fountaining at a fissure within Halemaʻumaʻu crater, January 2021](https://commons.wikimedia.org/wiki/File:Fountaining_at_a_fissure_within_Halema%CA%BBuma%CA%BBu_crater,_January_2021.jpg) | M. Patrick, U.S. Geological Survey | Public domain |
 
+## The clips in `example/media/summit/`
+
+`example/motion/` needs moving pictures, and nothing in this repository may be
+Apple's. So the clips were **made from a photograph already credited above** —
+`hero-2400.webp`, the USGS lava-lake frame — with `tools/make-clip.sh`, which
+applies a 1.11&times; push over three seconds and cuts the three crops
+`references/media.md` measured off apple.com.
+
+| file | pixels | derived from | licence |
+|---|---|---|---|
+| `small.mp4`, `small_2x.mp4` | 420&times;480, 840&times;960 | [Kilauea Lava Lake (12792432484)](https://commons.wikimedia.org/wiki/File:Kilauea_Lava_Lake_(12792432484).jpg), U.S. Geological Survey | Public domain |
+| `medium.mp4`, `medium_2x.mp4` | 934&times;576, 1868&times;1152 | the same frame | Public domain |
+| `large.mp4`, `large_2x.mp4` | 1260&times;612, 2520&times;1224 | the same frame | Public domain |
+| `start-small.webp`, `start-medium.webp`, `start-large.webp` | frame 0 of each crop | the same frame | Public domain |
+
+A pan across a public-domain photograph is a derivative of a public-domain
+work, so the result carries no new restriction. It is also the honest fallback
+`references/media.md` ranks last: when there is no footage to be had, a slow
+move on a good still beats a static tile, and it beats a watermarked preview
+outright.
+
 ## Why these and not stock photography
 
 `references/imagery.md` records what was actually reachable when this page was

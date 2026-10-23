@@ -53,8 +53,13 @@ skills/apple-design/
   references/stacks.md         Tailwind / CSS modules / CSS-in-JS, and the migration order
   references/typography.md     the scale, the 20px family switch, the tracking table
   references/layout.md         rhythm, the content column, the tile contract, art direction
-  references/motion.md         curves, reveals, staggering, sticky parallax, scroll-linked video
+  references/motion.md         curves ranked by frequency, reveals, staggering, sticky parallax
+  references/media.md          video and image transitions — the source ladder, the still underneath, ffmpeg
+  references/composition.md    what has to be IN the page: media-to-text ratio, subject hierarchy, pace
+  references/imagery.md        where real pictures come from: sources, licences, crops per breakpoint
   references/components.md     hero, feature grid, comparison table, gallery, local nav
+  references/micro.md          dotnav, paddlenav, tabnav — the measured token blocks
+  references/erp.md            read first for a tool: dense type ladder, table and form contracts
   references/voice.md          how Apple writes headlines — read before writing copy
   assets/apple-base.css        tokens and primitives for a NEW page (placeholder palette — replace it)
   assets/type-scale.json       all 106 measured typography classes

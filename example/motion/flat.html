@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kilauea &middot; the same page, done wrong</title>
+<!--
+  Deliberately wrong. Same photographs, same copy, same tokens as index.html —
+  every mistake in the table at the end of references/media.md, and nothing
+  else. The audit's media checks exist to catch exactly this, and
+  test/media.mjs asserts that it does.
+
+    · a bare <video>: no still underneath, so a failed load is an empty box
+    · autoplay loop with no muted and no playsinline — a phone refuses it
+    · preload="auto": every byte fetched at page load, nothing lazy
+    · no accessible name anywhere near it
+    · one render served to every width, letterboxed on a phone
+    · no prefers-reduced-motion rule in the stylesheet at all
+-->
+<style>
+:root {
+  --ink:#1d1d1f; --ink-secondary:#57575c; --ink-muted:#6e6e73;
+  --surface:#ffffff; --surface-alt:#f5f3f0; --hairline:#e6e2dc;
+  --accent:#9c4a1a;
+  --radius-card:28px; --radius-tile:12px;
+  --ease-standard:cubic-bezier(.4,0,.6,1); --ease-out-soft:cubic-bezier(0,0,.5,1);
+  --t-hero-size:80px;  --t-hero-line:1.05; --t-hero-track:-0.015em;
+  --t-head-size:48px;  --t-head-line:1.0834933333; --t-head-track:-0.003em;
+  --t-intro-size:21px; --t-intro-line:1.381002381;  --t-intro-track:0.011em;
+  --t-body-size:17px;  --t-body-line:1.4705882353;  --t-body-track:-0.022em;
+  --t-cap-size:12px;   --t-cap-line:1.3333733333;   --t-cap-track:-0.01em;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.col{max-width:1068px;margin:0 auto;padding-inline:24px}
+section{padding-block:120px}
+h1,h2{margin:0 0 .4em;font-weight:600}
+h1{font-size:var(--t-hero-size);line-height:var(--t-hero-line);letter-spacing:var(--t-hero-track)}
+h2{font-size:var(--t-head-size);line-height:var(--t-head-line);letter-spacing:var(--t-head-track)}
+p{font-size:var(--t-body-size);line-height:var(--t-body-line);letter-spacing:var(--t-body-track);
+  color:var(--ink-secondary);max-width:40em}
+.intro{font-size:var(--t-intro-size);line-height:var(--t-intro-line);letter-spacing:var(--t-intro-track)}
+.cap{font-size:var(--t-cap-size);line-height:var(--t-cap-line);letter-spacing:var(--t-cap-track);
+  color:var(--ink-muted);text-transform:uppercase}
+.hero{position:relative;color:#fff;background:#1a1512;overflow:hidden}
+.hero video{display:block;width:100%;height:min(84vh,760px);object-fit:cover}
+.hero .copy{position:absolute;inset:auto 0 0 0;padding:0 0 64px;
+  background:linear-gradient(transparent,rgba(0,0,0,.55))}
+.hero h1,.hero .intro{color:#fff}
+.band img{display:block;width:100%;aspect-ratio:21/9;object-fit:cover;
+  border-radius:var(--radius-card)}
+.frames img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;
+  border-radius:var(--radius-card)}
+.grid{display:grid;gap:24px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  margin-top:48px;padding:0;list-style:none}
+.grid li{border-radius:var(--radius-tile);overflow:hidden;background:var(--surface-alt)}
+.grid img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover}
+.grid figcaption{padding:16px 20px 20px}
+.grid li{transition:transform 250ms var(--ease-standard)}
+.grid li:hover{transform:translateY(-4px)}
+@media (max-width:734px){
+  :root{--t-hero-size:40px;--t-head-size:32px;--t-intro-size:19px}
+  section{padding-block:80px}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <video src="../media/summit/large.mp4" autoplay loop preload="auto"></video>
+  <div class="copy"><div class="col">
+    <p class="cap">Hawai&#699;i Volcanoes</p>
+    <h1>Three seconds.<br>Then it holds still.</h1>
+    <p class="intro">One clip, one file, one crop, fetched whether you scroll
+      to it or not.</p>
+  </div></div>
+</header>
+
+<section class="col">
+  <h2>One replaces the other.</h2>
+  <p>Four frames, swapped with no transition at all, and the same file served to
+    a phone as to a desktop.</p>
+  <div class="frames"><img src="../media/slide-fountain.webp" alt="A lava fountain breaking the surface of the crater floor"></div>
+</section>
+
+<section>
+  <div class="col"><h2>It opens as you arrive.</h2>
+    <p>Except that it does not: the panel is the shape it will always be.</p></div>
+  <div class="band col"><img src="../media/band-2400.webp" alt="The caldera rim at dawn, steam along its length"></div>
+</section>
+
+<section class="col">
+  <h2>Dealt out, not flashed in.</h2>
+  <p>All three arrive at once, which is the same as none of them arriving.</p>
+  <ul class="grid">
+    <li><figure style="margin:0">
+      <img src="../media/card-summit.webp" alt="The summit caldera from the north rim">
+      <figcaption><p class="cap">Summit</p><p>Halema&#699;uma&#699;u, after the collapse.</p></figcaption></figure></li>
+    <li><figure style="margin:0">
+      <img src="../media/card-rift.webp" alt="The east rift zone cutting through forest">
+      <figcaption><p class="cap">East rift</p><p>Where the ground opened in 2018.</p></figcaption></figure></li>
+    <li><figure style="margin:0">
+      <img src="../media/card-sample.webp" alt="A geologist taking a molten sample from a flow">
+      <figcaption><p class="cap">Fieldwork</p><p>A sample, taken at 1150&nbsp;&deg;C.</p></figcaption></figure></li>
+  </ul>
+</section>
+
+</body></html>

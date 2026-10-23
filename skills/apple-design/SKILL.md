@@ -67,9 +67,18 @@ So, before any of the numbers below:
 - **If no images were provided, go and find them.** That is part of building
   the page, not a blocker to hand back. `references/imagery.md` has verified
   sources, the licence rules and the crop rules.
+- **Something on the page has to move, and it is not the text.** Counted in the
+  shipped markup: a flagship product page carries **6 to 14 `<video>` elements**
+  against 110–204 `<picture>` — roughly one short clip per two or three
+  sections, each about 260 KB. Category and index pages carry **none**. So the
+  rule is not "add video", it is: a product page with zero moving pictures is
+  missing a third of the vocabulary, while a category page is right to have
+  none. A clip is three seconds, silent, and plays once as you arrive —
+  `references/media.md`.
 
-Read `references/composition.md` before writing any marketing page, and
-`references/imagery.md` before deciding a page has to ship without pictures.
+Read `references/composition.md` before writing any marketing page,
+`references/imagery.md` before deciding a page has to ship without pictures,
+and `references/media.md` before adding any video or image transition.
 
 ## First decide which product this is
 
@@ -186,6 +195,13 @@ Durations by frequency: `250ms` default, `100ms` hover, `400ms` section reveal,
 `160ms`/`200ms` small moves, `850ms` large scroll-linked moves. Hover feedback is
 always the fastest thing on the page.
 
+A reveal of *content* is slower than that and staggers at **150ms** per item —
+0.9s opacity over a 0.7s 30px rise, the shipped tokens. Moving pictures and the
+transitions between stills are a technique of their own, with their own measured
+numbers: `references/media.md`. The short version is that a clip is three
+seconds, silent, re-cropped per breakpoint, has a photograph underneath it, and
+is never scrubbed.
+
 ### Parallax is CSS, not a scroll handler
 
 Apple pins a section with `position: sticky` and buys the scroll distance with a
@@ -262,8 +278,13 @@ Load only the reference you need:
   106 measured classes.
 - `references/layout.md` — rhythm, content column, the tile contract, art
   direction, alternating surfaces.
-- `references/motion.md` — parallax layers, scroll-linked media, staggered
-  reveals, and what must stay readable when JS does not run.
+- `references/motion.md` — curves ranked by measured frequency, parallax
+  layers, staggered reveals, and what must stay readable when JS does not run.
+- `references/media.md` — **read before any video or image transition.** The
+  measured source ladder (six files, three crops, two densities), the
+  four-layer stack with the still underneath, the download and play windows,
+  the ffmpeg recipes and byte budgets, why these clips must not be scrubbed,
+  the asymmetric crossfade and clip-path open, and where footage comes from.
 - `references/components.md` — hero, feature grid, comparison table, gallery,
   sticky local nav.
 - `references/voice.md` — read before writing any headline, subhead or button.
