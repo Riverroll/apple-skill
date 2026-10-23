@@ -72,6 +72,12 @@ layer occupies the same cell:
 .positioned-media-element { grid-area: 1 / 1; width: 100%; height: 100%; }
 ```
 
+Those are Apple's own class names, kept here so the markup above matches what
+you will find in their page source. `assets/apple-base.css` ships the same
+contract under shorter ones — `.media-stack`, `.media-layer`, `.media-still`,
+`.media-clip` — along with the crossfade, the open panel and the measured
+timing tokens, so a new page gets them without copying from this file.
+
 - `grid-area: 1 / 1` on every layer, not `position: absolute`. The stack keeps
   the intrinsic height of its content, so the tile does not collapse before the
   video loads.

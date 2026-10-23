@@ -54,6 +54,16 @@
   --ease-out-sharp: cubic-bezier(0, 0, 0.2, 1);
   --ease-overshoot: cubic-bezier(0.3, 2, 0.5, 1);
   --ease-dramatic: cubic-bezier(0.53, -0.01, 0.17, 1);
+  /* the 2026 product pages' own curve: a long slow-out, only over 400ms+ */
+  --ease-product: cubic-bezier(0.42, 0, 0.1, 1);
+
+  /* reveal and media timing — all measured, see references/media.md */
+  --staggered-delay: 0.15s;
+  --staggered-opacity-duration: 0.9s;
+  --staggered-translate-y: 30px;
+  --staggered-translate-y-duration: 0.7s;
+  --fade-out: 300ms; --fade-out-delay: 0ms;
+  --fade-in: 600ms;  --fade-in-delay: 250ms;
 }
 
 /* Specificity matters here: these stay at plain :root so a page that defines
@@ -157,13 +167,69 @@ body {
 
 /* ---- reveal ----
    The hidden state is added by JS (see references/motion.md) so the page is
-   fully readable when script does not run. */
-.reveal--initial { opacity: 0; transform: translateY(30px); }
+   fully readable when script does not run. Durations and the 30px rise are the
+   shipped StaggeredFadeIn values: the fade outlasts the move, so an element has
+   arrived in place while it is still settling in opacity. */
+.reveal--initial { opacity: 0; transform: translateY(var(--staggered-translate-y)); }
 .reveal--active  {
   opacity: 1; transform: none;
-  transition: opacity 400ms var(--ease-out-soft), transform 400ms var(--ease-out-soft);
+  transition: opacity var(--staggered-opacity-duration) var(--ease-out-soft),
+              transform var(--staggered-translate-y-duration) var(--ease-out-soft);
 }
-.stagger-item { transition-delay: calc(min(var(--i, 0), 6) * 60ms); }
+/* 150ms per item for content. A six-item row at 60ms reads as one block
+   flashing in; at 150ms you see the items dealt out. */
+.stagger-item { transition-delay: calc(min(var(--i, 0), 6) * var(--staggered-delay)); }
+/* ...and the faster step for a small UI list, where the whole sequence has to
+   finish inside one interaction */
+.stagger-item--ui { transition-delay: calc(min(var(--i, 0), 6) * 60ms); }
+
+/* ---- moving pictures (see references/media.md) ----
+   Apple's own class names for this stack are .video-element-stack and
+   .positioned-media-element; these are the same contract under shorter names.
+   Every layer sits in one grid cell, so the box keeps its height before the
+   video exists and the still underneath is never a placeholder — it is what
+   ships when the clip is slow, blocked, or unwanted. */
+.media-stack { display: grid; isolation: isolate; }
+.media-layer { grid-area: 1 / 1; width: 100%; height: 100%; }
+.media-layer :where(img, video) { display: block; width: 100%; height: 100%; object-fit: cover; }
+.media-still { z-index: 1; }
+.media-clip  { z-index: 2; opacity: 0; transition: opacity 400ms var(--ease-out-soft); }
+.media-clip--ready { opacity: 1; }
+
+/* The clip is an enhancement over the photograph, so it leaves entirely when
+   script is off or motion is unwelcome. A paused first frame is not the
+   fallback; the still is. */
+html.no-js .media-clip,
+html.reduced-motion .media-clip { display: none; }
+
+/* ---- crossfade between two stills ----
+   Out fast, in slow, with a hold between them. Symmetric timing produces a
+   muddy double exposure at the midpoint; this reads as one image replacing
+   another. transition-behavior lets the outgoing frame leave the layout
+   instead of sitting invisible and eating clicks. */
+.frame {
+  grid-area: 1 / 1; opacity: 1;
+  transition: opacity var(--fade-out) ease-in-out var(--fade-out-delay),
+              display var(--fade-in) ease-in-out var(--fade-in-delay);
+  transition-behavior: allow-discrete;
+}
+.frame[hidden] { display: none; opacity: 0; }
+.frame[data-current] {
+  opacity: 1;
+  transition: opacity var(--fade-in) ease-in-out var(--fade-in-delay);
+  transition-behavior: allow-discrete;   /* the shorthand above resets it */
+}
+
+/* ---- a panel that opens from card to full bleed ----
+   One scalar, 0 to 1, drives the side inset and the corner radius together.
+   Set it to a flat 1 to switch the effect off; there is no second rule to keep
+   in sync. */
+.open-panel {
+  --open: 0;
+  clip-path: inset(0 calc((1 - var(--open)) * 6.25vw)
+             round calc((1 - var(--open)) * var(--radius-card)));
+}
+@media (prefers-reduced-motion: reduce) { .open-panel { --open: 1; } }
 
 /* ---- scroll-linked sections (see references/motion.md) ----
    Pure sticky + a spacer: nothing runs per scroll event. Gated behind the

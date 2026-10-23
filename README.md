@@ -46,6 +46,7 @@ cp -r apple-skill/skills/apple-design ~/.claude/skills/
 
 ```
 tools/audit.mjs                audit any live URL — see below
+tools/make-clip.sh             build one clip's six-file ladder and its stills
 skills/apple-design/
   SKILL.md                     what to change and what to leave alone, token roles, the four rules
   references/restraint.md      one accent, three inks, three radii, two weights
@@ -180,6 +181,38 @@ paginating, the 40ms stagger between neighbours, the autoplay dot that morphs
 into a 32px progress track, and the one selector most hand-built carousels miss
 — `:focus-visible` on paddles that are hidden until hover.
 
+## Moving pictures
+
+A third of what a visitor sees on an apple.com product page is a photograph or
+a video, and the video half is narrower than people assume. Measured off the
+shipped assets: **a three-second silent clip, 30fps, one keyframe for the whole
+file, art-directed into three crops at two densities** — a 0.88 portrait for
+phones, a 1.62 for tablets, a 2.06 at 1260px for desktop. 260 KB on a 1&times;
+desktop screen. A flagship page carries 6 to 14 of them; a category page
+carries none.
+
+Two things follow that most hand-built versions get wrong. A single-keyframe
+file **cannot be scrubbed** — writing `currentTime` on it decodes from frame 0
+every time, which is the stutter. And the clip is never alone: a `<picture>` of
+frame 0 sits in the same grid cell underneath it, so a slow connection, a
+blocked request or `prefers-reduced-motion` lands on a photograph. With the
+preference set Apple does not slow the clip down, it never fetches it.
+
+`references/media.md` has the loader's measured windows (download at
+`top − 200vh`, play at `top − 100vh`, never paused on exit), the ffmpeg
+recipes, the byte budgets, and the four image-transition techniques with their
+shipped numbers — including the asymmetric crossfade, which is out in 300ms and
+in over 600ms after a 250ms hold, because symmetric timing produces a muddy
+double exposure at the midpoint.
+
+```sh
+tools/make-clip.sh master.mov out/     # or a photograph: it gets a 1.11x push
+```
+
+`example/motion/` demonstrates all of it; `example/motion/flat.html` is the
+same content with every mistake in it, and the audit's six media findings fire
+on that one and stay silent on the other.
+
 ## Tools are not pages
 
 An ERP, an admin panel or a dashboard shares the craft and almost none of the
@@ -229,11 +262,20 @@ values — computed styles in a real browser, compared to `assets/type-scale.jso
 node test/structure.mjs                 # the skill loads, refs resolve, no Apple assets
 node test/conformance.mjs <url>         # computed styles vs the measured values
 node test/restraint.mjs                 # the before/after pair, self-contained
-node test/erp.mjs                      # the dense-tool pair, self-contained
-node test/composition.mjs              # the soul pair, self-contained
+node test/erp.mjs                       # the dense-tool pair, self-contained
+node test/composition.mjs               # the soul pair, self-contained
+node test/media.mjs                     # the clip ladder, the stack, the fallbacks
+node test/gallery.mjs                   # the carousel: paddles, dots, keyboard
 ```
 
-105 checks: the restraint counts (one accent hue, at most seven text colours,
+301 checks across the seven. `test/media.mjs` is the widest of them: it reads
+the six clip files off disk (moov before mdat, no audio track, inside the byte
+budget, three crops at three aspect ratios), then drives a real browser through
+the markup as parsed, the source the loader picks at 1440px, at 2&times; and at
+420px, playback, the drop-to-still path with the file deliberately failing,
+reduced motion, and scripting off.
+
+The rest cover: the restraint counts (one accent hue, at most seven text colours,
 three radii, weights 400/600), the type scale, the tracking table, button geometry, the em rhythm
 ladder, the content column at each breakpoint, that type is re-picked rather
 than scaled on phone, that scroll-linked sections use sticky plus a spacer and

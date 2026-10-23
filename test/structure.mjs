@@ -28,14 +28,39 @@ for (const f of fs.readdirSync(path.join(SKILL, "references"))) {
   ok(`reference has real content: ${f}`, size > 1500, `${size}B`);
 }
 
+// A new page gets its primitives from apple-base.css, so what the references
+// teach has to be in there. These are the ones a page cannot reconstruct from
+// prose on its own: the media stack contract and the measured timings.
+const baseCss = fs.readFileSync(path.join(SKILL, "assets/apple-base.css"), "utf8");
+for (const [what, re] of [
+  ["the media stack is one grid cell per layer", /\.media-layer\s*{[^}]*grid-area:\s*1\s*\/\s*1/],
+  ["the clip leaves entirely without JS or with reduced motion", /html\.no-js \.media-clip[\s\S]{0,120}display:\s*none/],
+  ["the crossfade can drop the outgoing frame", /transition-behavior:\s*allow-discrete/],
+  ["the open panel runs off one scalar", /--open[\s\S]{0,200}clip-path:\s*inset\(/],
+  ["the stagger is the shipped 150ms", /--staggered-delay:\s*0\.15s/],
+  ["the fade outlasts the move", /--staggered-opacity-duration:\s*0\.9s[\s\S]{0,200}--staggered-translate-y-duration:\s*0\.7s/],
+  ["the crossfade is asymmetric", /--fade-out:\s*300ms[\s\S]{0,120}--fade-in:\s*600ms/],
+  ["reduced motion is honoured", /prefers-reduced-motion/],
+]) ok(`apple-base.css: ${what}`, re.test(baseCss));
+
 // the audit tool is part of what ships
-for (const t of ["tools/audit.mjs"]) {
+for (const t of ["tools/audit.mjs", "tools/make-clip.sh"]) {
   const f = path.join(ROOT, t);
   ok(`tool exists: ${t}`, fs.existsSync(f));
   if (fs.existsSync(f)) {
     const src = fs.readFileSync(f, "utf8");
-    ok(`${t} is read-only (no page mutation)`, !/document\.write|innerHTML\s*=/.test(src));
-    ok(`${t} measures more than one width`, /WIDTHS\s*=\s*\[[^\]]*,/.test(src));
+    if (t.endsWith(".mjs")) {
+      ok(`${t} is read-only (no page mutation)`, !/document\.write|innerHTML\s*=/.test(src));
+      ok(`${t} measures more than one width`, /WIDTHS\s*=\s*\[[^\]]*,/.test(src));
+    } else {
+      // the clip builder has to produce the ladder the reference documents
+      ok(`${t} builds three crops at two densities`,
+         /small 420 480/.test(src) && /medium 934 576/.test(src) && /large 1260 612/.test(src) &&
+         /small_2x 840 960/.test(src) && /large_2x 2520 1224/.test(src));
+      ok(`${t} drops the audio track and puts moov first`,
+         /-an\b/.test(src) && /faststart/.test(src));
+      ok(`${t} exports the still that ships instead`, /start-\$name|start-/.test(src));
+    }
   }
 }
 ok("SKILL.md points at the audit tool", /tools\/audit\.mjs/.test(skillMd));
