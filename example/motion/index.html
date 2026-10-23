@@ -276,25 +276,37 @@ for (const group of document.querySelectorAll("[data-crossfade]")) {
   show(0);
 }
 
-// --- 3. the clip-path open, one scalar written once per frame
-const panels = [...document.querySelectorAll("[data-open-panel]")];
-if (panels.length && !reduced.matches) {
-  let queued = false;
-  const write = () => {
+// --- 3. the clip-path open: a scroll window between two anchor edges, the
+// fifteen-line version of what references/motion.md describes. One rAF per
+// frame, one custom property written, nothing else touched.
+const windows = [];
+const edge = (el, which) => {
+  const r = el.getBoundingClientRect();
+  return which === "t" ? r.top : which === "b" ? r.bottom : r.height;
+};
+const scrollWindow = (w) => windows.push(w);
+let queued = false;
+addEventListener("scroll", () => {
+  if (queued) return;
+  queued = true;
+  requestAnimationFrame(() => {
     queued = false;
-    for (const p of panels) {
-      const r = p.getBoundingClientRect();
-      // 0 while it is still a viewport away, 1 once its top reaches 40% up
-      const t = (innerHeight - r.top) / (innerHeight * 0.6);
-      p.style.setProperty("--open", Math.min(1, Math.max(0, t)).toFixed(3));
+    for (const w of windows) {
+      const a = edge(w.from[0], w.from[1]) + (w.from[2] ?? 0) * innerHeight;
+      const b = edge(w.to[0], w.to[1]) + (w.to[2] ?? 0) * innerHeight;
+      const p = (0 - a) / (b - a || 1);
+      w.target.style.setProperty(w.prop, Math.min(1, Math.max(0, p)).toFixed(3));
     }
-  };
-  addEventListener("scroll", () => {
-    if (queued) return;
-    queued = true;
-    requestAnimationFrame(write);
-  }, { passive: true });
-  write();
+  });
+}, { passive: true });
+
+// "open while the panel is arriving": from one viewport below its own top, to
+// 40% up the screen. Registered only when motion is welcome — with the
+// preference set the CSS pins --open at 1 and nothing runs.
+if (!reduced.matches) {
+  for (const panel of document.querySelectorAll("[data-open-panel]"))
+    scrollWindow({ target: panel, from: [panel, "t", -1], to: [panel, "t", -0.4], prop: "--open" });
+  dispatchEvent(new Event("scroll"));
 }
 
 // --- 4. reveal once, then stop watching

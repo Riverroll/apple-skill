@@ -249,6 +249,77 @@ just the sticky rules — it is what stops the effect from being a liability.
 `prefers-reduced-motion` is inside the gate, so reduced motion gets the plain
 stacked section rather than a retimed version of the pinned one.
 
+## Scroll windows, and how to write them without the framework
+
+Apple's scroll system takes every window as an expression over element edges
+rather than a threshold per component:
+
+```
+start: "a0t - 100vh"     end: "a1b + 50vh"     anchors: [".hero", "#gallery"]
+```
+
+- `t` `b` `h` — the target's own top, bottom, height.
+- `a0t` `a0b` `a0h` — anchor 0's top, bottom, height; `a1…` the second anchor.
+- units `vh` `%` `px`, arithmetic `+ − *`, and `var(--token)` inline.
+- `breakpointMask: "S"` restricts a window to small screens, and
+  `disabledWhen: ["reduced-motion"]` removes it.
+
+The shipped defaults, measured: media downloads over `t - 200vh → b + 100vh`,
+plays over `t - 100vh → b`, a gallery takes keyboard focus over
+`t - 100vh → b + 100%`, and a title image crossfades over
+`a0t - 80vh → a0t - 42vh` — 38vh of scroll for one fade.
+
+What is worth copying is the habit: **a window is stated against named edges,
+so no component invents a magic pixel value.** Two anchors and an offset in
+`vh` express "while the hero is leaving and the gallery has not arrived" with
+nothing to retune when the sections change height.
+
+`IntersectionObserver` cannot express that — one element, one root, no
+arithmetic. Two anchor edges and a progress value take about fifteen lines:
+
+```js
+// progress 0 → 1 between two edges, written to a custom property.
+// One rAF per frame regardless of how many windows are registered.
+const windows = [];
+const edge = (el, which) => {
+  const r = el.getBoundingClientRect();
+  return which === "t" ? r.top : which === "b" ? r.bottom : r.height;
+};
+export function scrollWindow({ target, from, to, prop = "--progress" }) {
+  windows.push({ target, from, to, prop });
+}
+let queued = false;
+addEventListener("scroll", () => {
+  if (queued) return;
+  queued = true;
+  requestAnimationFrame(() => {
+    queued = false;
+    for (const w of windows) {
+      const a = edge(w.from[0], w.from[1]) + (w.from[2] ?? 0) * innerHeight;
+      const b = edge(w.to[0], w.to[1]) + (w.to[2] ?? 0) * innerHeight;
+      const p = (0 - a) / (b - a || 1);               // 0 when a is at the top edge
+      w.target.style.setProperty(w.prop, Math.min(1, Math.max(0, p)).toFixed(3));
+    }
+  });
+}, { passive: true });
+```
+
+```js
+// "open while the panel is arriving": from one viewport below its own top, to
+// 40% up the screen. The third number is in viewports, so it reads the way the
+// expression language does: [element, edge, offset-in-vh].
+scrollWindow({ target: panel, from: [panel, "t", -1], to: [panel, "t", -0.4], prop: "--open" });
+```
+
+`example/motion/` runs exactly this code, so the snippet is the shipped one
+rather than an illustration of it.
+
+The CSS then consumes one scalar and the JS never touches a style other than
+that property — which is the real reason Apple's version does not jitter.
+Register nothing when `prefers-reduced-motion` matches, and set the scalar to
+its finished value in CSS instead, exactly as the clip-path open does in
+`references/media.md`.
+
 ## Reduced motion
 
 ```css
