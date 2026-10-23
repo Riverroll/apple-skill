@@ -52,28 +52,33 @@ outright.
 
 ## The clips in `tilt/`, `network/` and `alert/`
 
-These three are not photography and not footage: they are **the interface
-itself**, rendered frame by frame. `example/scenes/tilt.html`,
-`network.html` and `alert.html` each expose one function, `setFrame(t)`, and
-`tools/render-clip.mjs` drives a headless browser through 90 values of `t`,
-captures each paint, and encodes the result into the same six-file ladder
-`references/media.md` measured off apple.com.
+These three are **the interface itself**, rendered frame by frame over a
+photograph. `example/scenes/tilt.html`, `network.html` and `alert.html` each
+expose one function, `setFrame(t)`, and `tools/render-clip.mjs` drives a
+headless browser through 90 values of `t`, captures each paint, and encodes
+the result into the same six-file ladder `references/media.md` measured off
+apple.com.
 
-Nothing in them is traced, sampled or generated from somebody else's work. The
-numbers are invented, the product is invented, and the typefaces are the
-system stack the page already uses.
+Each scene loads one of the public-domain photographs already credited above
+as its bed, scrims it, and draws the data on top — so the encoded clip
+**contains that photograph**, and inherits its licence. Everything drawn over
+it is this repository's: the numbers are invented, the product is invented,
+and the typefaces are the system stack the page already uses. Nothing is
+traced, sampled or generated from somebody else's work.
 
-| file | pixels | source | licence |
+| file | pixels | drawn over | licence |
 |---|---|---|---|
-| `tilt/*.mp4` | the six measured sizes | `example/scenes/tilt.html` | MIT, with the rest of this repo |
-| `network/*.mp4` | the same six | `example/scenes/network.html` | MIT |
-| `alert/*.mp4` | the same six | `example/scenes/alert.html` | MIT |
-| `start-small.webp`, `start-medium.webp`, `start-large.webp` in each | frame 0 of each crop | exported from the encoded file | MIT |
+| `tilt/*.mp4` | the six measured sizes | `band-2400.webp` — [Mauna Loa lava flow](https://commons.wikimedia.org/wiki/File:November_30,_2022_%E2%80%94_Mauna_Loa_Lava_Flow_(111218).jpg), USGS HVO | Public domain bed, MIT overlay |
+| `network/*.mp4` | the same six | `slide-sea.webp` — [USGS Kīlauea multimediaFile-2066](https://commons.wikimedia.org/wiki/File:USGS_K%C4%ABlauea_multimediaFile-2066.jpg), USGS | Public domain bed, MIT overlay |
+| `alert/*.mp4` | the same six | `card-rift.webp` — [Kilauea Fissure 8 cone erupting on 6-28-2018](https://commons.wikimedia.org/wiki/File:Kilauea_Fissure_8_cone_erupting_on_6-28-2018.jpg), USGS | Public domain bed, MIT overlay |
+| `start-small.webp`, `start-medium.webp`, `start-large.webp` in each | frame 0 of each crop | exported from the encoded file | as above |
 
-They weigh 18&ndash;50 KB at 1&times;, against 260 KB for the photographic
-clips — the bits-per-pixel table in `references/media.md` predicts exactly
-that: a flat graphic on a dark ground is the cheap end of the scale, and
-textured aerial footage is the expensive end, 58&times; apart.
+Putting the data on the picture roughly quadrupled them — 20&ndash;60 KB at
+1&times; where the same scenes on a flat dark panel cost 18&ndash;50 KB, and
+up to 407 KB at 2&times;. That is the bits-per-pixel table in
+`references/media.md` doing exactly what it says: the cost is texture, and a
+photograph is texture. It is also the right trade. A page that alternates
+photographs with flat dark panels reads as two pages interleaved.
 
 ## Why these and not stock photography
 

@@ -101,9 +101,33 @@ const sceneCss = fs.existsSync(path.join(sceneDir, "scene.css"))
 ok("the scene bed disables animation and transition outright",
    /animation:\s*none\s*!important/.test(sceneCss) && /transition:\s*none\s*!important/.test(sceneCss));
 
+const showcase = fs.readFileSync(path.join(ROOT, "example", "index.html"), "utf8");
+// Two audit checks added after looking at the page rather than the numbers:
+// pace (a long page whose sections are all one screenful has no rhythm) and
+// a whole-page sweep for mid-tone text on a photograph — the original only
+// ever saw the first screen, so it missed the loudest section on the page.
+const auditSrc = fs.readFileSync(path.join(ROOT, "tools/audit.mjs"), "utf8");
+ok("audit measures the spread of section heights", /out\.pace\s*=/.test(auditSrc));
+ok("audit reports a page with no rest in it",
+   /sections are the same height/.test(auditSrc));
+ok("the ink-over-media check sweeps the whole page, not the first screen",
+   /for \(let sweepY = 0; sweepY < document\.body\.scrollHeight/.test(auditSrc));
+
+// The showcase page is one event told in order. The clocks are the spine, and
+// a spine that does not run forwards is decoration.
+const clocks = [...showcase.matchAll(/class="[^"]*\bclock\b[^"]*"[^>]*>(\d\d:\d\d)</g)]
+  .map((m) => m[1]);
+ok("the showcase tells one event in order", clocks.length >= 4 &&
+   clocks.every((t, i) => i === 0 || t > clocks[i - 1]), clocks.join(" "));
+
+// The axis trap: .sticky-content is a column flex container, so align-items
+// does not move the copy down to where the scrim is.
+ok("the pinned copy is placed on the right axis",
+   /\.sticky-content\s*{\s*justify-content:\s*flex-end/.test(showcase.replace(/\s+/g, " ")) ||
+   /sticky-content\s*{[^}]*justify-content:\s*flex-end/.test(showcase));
+
 // A UI clip is framed at the MEDIA breakpoints, not the layout ones: a box
 // that changes shape at 734 while the file changes at 780 crops a crop.
-const showcase = fs.readFileSync(path.join(ROOT, "example", "index.html"), "utf8");
 ok("the showcase frames its UI clips at the media breakpoints",
    /min-width:\s*570px\)[^}]*aspect-ratio:\s*934\s*\/\s*576/.test(showcase) &&
    /min-width:\s*780px\)[^}]*aspect-ratio:\s*1260\s*\/\s*612/.test(showcase));

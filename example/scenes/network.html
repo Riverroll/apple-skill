@@ -12,8 +12,10 @@
   .of { color: var(--ink-secondary); font-weight: 400; }
   .map { position: relative; min-height: 0; }
   svg { display: block; width: 100%; height: 100%; }
-  .ring  { fill: none; stroke: var(--accent); stroke-width: 1.5; }
-  .site  { fill: color-mix(in srgb, var(--ink) 20%, transparent); }
+  .ring  { fill: none; stroke: var(--accent); stroke-width: 1.5;
+           filter: drop-shadow(0 0 8px rgb(10 8 7 / 0.9)); }
+  .site  { fill: color-mix(in srgb, var(--ink) 30%, transparent);
+           filter: drop-shadow(0 0 8px rgb(10 8 7 / 0.9)); }
   .site.on { fill: var(--accent); }
   @media (max-aspect-ratio: 1/1) {
     .head { display: block; }
@@ -23,6 +25,7 @@
 </style>
 </head>
 <body>
+  <div class="bed"><img src="../media/slide-sea.webp" alt=""></div>
   <div class="head">
     <span class="label">Network &middot; reporting</span>
     <span class="count readout"><span id="n">0</span><span class="of">&thinsp;/&thinsp;14</span></span>

@@ -304,10 +304,37 @@ function probeFn() {
   } : null;
   out.media.belowFold = { total: below, deferred, custom };
 
+  // Pace. A long page whose sections are all one screenful has no rhythm —
+  // it has a frequency, and every screen lands with the same weight. The
+  // measure is the spread of top-level section heights, not their absolute
+  // size: a rest only reads as a rest if it is shorter than its neighbours.
+  const blocks = [...document.querySelectorAll("main > section, main > figure, main > article, main > div")]
+    .map((el) => ({ h: Math.round(el.getBoundingClientRect().height), where: pathOf(el) }))
+    .filter((b) => b.h > 160);
+  const hs = blocks.map((b) => b.h).sort((a, b) => a - b);
+  const med = hs.length ? hs[Math.floor(hs.length / 2)] : 0;
+  out.pace = {
+    count: blocks.length,
+    median: med,
+    // how many sit within a sixth of the median — i.e. are indistinguishable
+    // in weight from the typical section
+    same: med ? blocks.filter((b) => Math.abs(b.h - med) / med <= 0.167).length : 0,
+    shortest: hs[0] || 0,
+    tallest: hs[hs.length - 1] || 0,
+  };
+
   // Ink tokens are for ink on a surface. Over a photograph the contrast check
   // above has nothing to measure against, so a muted step disappears into the
   // picture and nobody notices until they look at it.
+  // The check has to sweep the page, not the first screen. elementsFromPoint
+  // reads the CURRENT viewport, so a mid-page section — usually the loudest
+  // one, the full-bleed photograph with four words on it — was never looked
+  // at. scrollTo is synchronous for layout, so one pass does it.
   out.media.inkOverMedia = [];
+  const seenInk = new Set();
+  const startY = window.scrollY;
+  for (let sweepY = 0; sweepY < document.body.scrollHeight; sweepY += innerHeight * 0.9) {
+  window.scrollTo(0, sweepY);
   for (const el of document.querySelectorAll("body *")) {
     let owns = false;
     for (const n of el.childNodes) if (n.nodeType === 3 && n.textContent.trim()) { owns = true; break; }
@@ -335,10 +362,17 @@ function probeFn() {
     if (!c) continue;
     const lum = (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b) / 255;
     const eff = lum * c.a + 0.5 * (1 - c.a);        // unknown backdrop: assume mid
-    if (eff > 0.22 && eff < 0.78)
-      out.media.inkOverMedia.push({ where: pathOf(el), colour: cs.color,
-        size: Math.round(parseFloat(cs.fontSize)) });
+    if (eff > 0.22 && eff < 0.78) {
+      const key_ = pathOf(el) + cs.color;
+      if (!seenInk.has(key_)) {
+        seenInk.add(key_);
+        out.media.inkOverMedia.push({ where: pathOf(el), colour: cs.color,
+          size: Math.round(parseFloat(cs.fontSize)) });
+      }
+    }
   }
+  }
+  window.scrollTo(0, startY);
   for (const sheet of document.styleSheets) {
     try {
       for (const r of sheet.cssRules)
@@ -1140,6 +1174,15 @@ if (!useErp) {
     add(6, `${bf.total} images below the fold, none of them deferred`,
         "no loading=\"lazy\" and no lazy-loading attributes of your own",
         'apple.com ships no loading="lazy" either, but only because its own scroll windows hold every asset back until two viewports out. Without a system like that, the native attributes are the whole job: loading="lazy" and decoding="async" on everything below the fold, and neither on the hero.');
+
+  // Pace is the mechanism behind "every section feels the same". It is not a
+  // colour, a size or a token, so nothing else in this audit can see it.
+  const pace = d.pace || { count: 0 };
+  if (pace.count >= 6 && pace.same / pace.count >= 0.7)
+    add(7, `${pace.same} of ${pace.count} sections are the same height`,
+        `median ${pace.median}px · shortest ${pace.shortest}px · tallest ${pace.tallest}px`,
+        "A long page is loud, quiet, loud, quiet, and a rest only reads as a rest if it is visibly shorter than what surrounds it. Apple's product pages run a full-screen hero, then a few hundred pixels of one sentence, then full-bleed media, then a short stat strip. Every section at one screenful is a frequency, not a rhythm — it is the main reason a page whose tokens are all correct still reads as generated. See references/composition.md.",
+        []);
 
   if (md.moving > 0 && !md.reducedMotionRule)
     add(8, `${md.moving} element(s) animate and nothing honours reduced motion`,

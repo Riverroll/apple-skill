@@ -88,8 +88,10 @@ wrong, naming the elements:
         and map the rest to ink steps.
 ```
 
-It also reports: text colours and radius/padding/duration scatter, display
-sizes shipping `letter-spacing: normal`, headlines **scaled** on phone instead
+It also reports: sections that are all the same height (a long page with no
+rest in it is the main reason a correct page still reads as generated), text
+colours and radius/padding/duration scatter, display sizes shipping
+`letter-spacing: normal`, headlines **scaled** on phone instead
 of re-picked (and large ones that never step down at all), text below WCAG AA
 against the background it actually sits on, text sitting under an ancestor
 stuck below full opacity (which multiplies every ink step inside it), sticky
@@ -270,16 +272,26 @@ MIT, for the skill's own text and CSS.
 ## Example
 
 `example/index.html` is a **marketing page** for an invented product — Ridge, a
-ground-deformation network — built on `assets/apple-base.css`: hero, media
-bands, a four-number stat row, alternating feature rows, a pinned scroll-linked
-section, a carousel, a spec block and a close. Its palette is deliberately
-**not** Apple's: warm, dark, its own identity, while every proportion, tracking
-value and curve is Apple's. That is the point of the skill in one file.
+ground-deformation network — built on `assets/apple-base.css`. Its palette is
+deliberately **not** Apple's: warm, dark, its own identity, while every
+proportion, tracking value and curve is Apple's.
 
-Four of its media are clips, and three of those were rendered from
-`example/scenes/` rather than filmed — the product's own interface, moving.
+It is also the worked answer to the complaint that correct tokens cannot fix:
+*"every section is fine and the page still feels like nothing."* The page is
+**one morning, in order** — 05:30 nothing is happening, 06:41 the ground
+tilts, 06:42 four phones ring, 07:00 the vent opens, then the payoff, then the
+explanation — and the time carries through in the same place, in the same
+type, every step. Shuffle the sections and it breaks, which is the test.
+
+The three interface clips are rendered from `example/scenes/` rather than
+filmed, and each one draws **over the page's own photograph** rather than on a
+flat dark panel. That is the other half of the fix: a page that alternates
+bright documentary photography with black dashboards reads as two pages
+interleaved. `references/composition.md` has both rules.
+
 The photographs are public domain USGS and NPS frames; the product, its
-numbers and its prices are fiction, and the page says so above the credits.
+numbers and the morning itself are fiction, and the page says so above the
+credits.
 
 ## Testing
 
@@ -296,7 +308,7 @@ node test/media.mjs                     # the clip ladder, the stack, the fallba
 node test/gallery.mjs                   # the carousel: paddles, dots, keyboard
 ```
 
-338 checks across the seven. `test/media.mjs` is the widest of them: it reads
+343 checks across the seven. `test/media.mjs` is the widest of them: it reads
 the six clip files off disk (moov before mdat, no audio track, inside the byte
 budget, three crops at three aspect ratios), then drives a real browser through
 the markup as parsed, the source the loader picks at 1440px, at 2&times; and at

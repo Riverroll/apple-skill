@@ -249,6 +249,26 @@ just the sticky rules — it is what stops the effect from being a liability.
 `prefers-reduced-motion` is inside the gate, so reduced motion gets the plain
 stacked section rather than a retimed version of the pinned one.
 
+### Where the copy sits in a pinned section
+
+`.sticky-content` is a **column** flex container. The axis that moves its copy
+up and down is therefore `justify-content`, not `align-items` — writing
+`align-items: flex-end` there reads like "put it at the bottom" and does
+nothing of the sort, leaving the block in the vertical middle.
+
+```css
+html.enhance-xp .section-pinned .sticky-content {
+  justify-content: flex-end;              /* NOT align-items */
+  padding: 0 var(--gutter) 10vh;
+}
+```
+
+It matters more than a layout nit, because the bottom is where the scrim on a
+full-bleed photograph is strongest. Copy stranded in the middle of the frame
+sits on the brightest part of the picture with nothing behind it, and the
+contrast checks cannot see it — the backdrop is an image. See
+`references/composition.md`, "text on a picture is not text on a surface".
+
 ## Scroll windows, and how to write them without the framework
 
 Apple's scroll system takes every window as an expression over element edges

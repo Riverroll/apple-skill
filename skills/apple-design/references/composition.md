@@ -143,6 +143,71 @@ is the same block repeated at the same volume: section, three cards, section,
 three cards. Every screen has identical weight, so none of them land. That is
 the actual mechanism behind "it feels AI-made" — not the colours, the monotony.
 
+The countable version: **a rest has to be visibly shorter than what surrounds
+it.** If every section on a long page is one screenful give or take, the page
+has no pace — it has a frequency. A worked page runs something like 100vh
+hero, 220px rest, 90vh media, 72px stat strip, 250vh pinned, 100vh climax.
+The audit measures the spread and says so.
+
+## A spine, not just a subject
+
+Pace fixes how the page *feels*. It does not fix the other half of the
+complaint, which sounds like this: **"there is no connection between the
+sections, it feels bland."** That is a different fault, and restraint, rhythm
+and even good photography cannot touch it.
+
+The test is mechanical. **Shuffle the sections. If nothing breaks, there is no
+spine.** A page whose sections can be reordered without anybody noticing is a
+page where every section makes the same claim in a different format — stat
+row, feature row, carousel, spec table, all saying "we measure the thing
+well". Each one is correct. Together they are wallpaper.
+
+A spine is one claim told **in order**, carried by a device that repeats:
+
+- **A clock.** One event, minute by minute: 05:30 nothing · 06:41 the reading
+  moves · 06:42 the alert · 07:00 it happens. Every section is a step, and the
+  time appears in the same place, in the same type, every time.
+- **A distance, a count, a temperature** — anything that can only go one way.
+- **One person, from first screen to last.**
+
+Three rules follow from having one:
+
+1. **The first screen states the stake, not the category.** "Nineteen minutes."
+   beats "Ground deformation monitoring." The reader should finish the hero
+   wanting to know what happens, not knowing what the product category is.
+2. **The climax is the loudest section and the one with the least type on it.**
+   A full-bleed photograph, a time, four words. A climax that also explains
+   itself is not a climax.
+3. **The explanation goes after the payoff.** Specs, stat rows and feature rows
+   are the answer to "how is that possible", and that question does not exist
+   until the story has landed. A page that opens with its feature grid has
+   answered a question nobody asked yet.
+
+### Bind the two worlds
+
+A page that carries photographs *and* interface data has two visual worlds in
+it, and if they only ever alternate — bright photograph, flat dark dashboard,
+bright photograph — it reads as two different pages interleaved. That is a
+large part of what "AI slop" means when somebody says it about a page whose
+tokens are all correct.
+
+The fix is not to tone down the photography. It is to put the data **on** the
+picture: the tilt trace over the ground it was read from, the station map over
+the terrain it covers, the alert over the night it fired in. One surface, two
+layers, one page. `references/media.md` has the mechanics — a rendered scene
+can load the page's own photograph as its bed, scrim it, and draw on top.
+
+Two things that go wrong doing it:
+
+- **Too much scrim and the picture is gone**, which is the flat dark box
+  again with extra steps. Keep the wash light enough that the photograph is
+  unmistakably there, and buy the contrast per element instead — a text
+  shadow, a `drop-shadow` on the stroke — rather than per section.
+- **The bed has to be a quiet picture.** A chart climbing through a bright
+  steam plume is unreadable at any scrim. Pick the dark, textured frame for
+  the data, and save the bright one for the climax, where nothing is written
+  on it.
+
 ## The tells of a generated page
 
 These are specific, and most of them are countable. If a page has three or more

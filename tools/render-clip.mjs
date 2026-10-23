@@ -45,8 +45,12 @@ const run = (cmd, args) => {
   if (r.status !== 0) throw new Error(`${cmd} failed: ${(r.stderr || "").trim().split("\n").pop()}`);
 };
 
-// serve the scene's directory, so it can load its own stylesheets and images
-const root = path.resolve(path.dirname(scene));
+// Serve the scene's PARENT directory, so a scene can reference the page's own
+// pictures with `../media/...`. Serving the scene directory itself does not
+// work: the browser normalises a leading `../` away at the server root, so the
+// request arrives as `/media/...` and 404s.
+const sceneDir = path.resolve(path.dirname(scene));
+const root = path.dirname(sceneDir);
 const types = { ".html": "text/html", ".css": "text/css", ".js": "text/javascript",
   ".json": "application/json", ".webp": "image/webp", ".png": "image/png",
   ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".woff2": "font/woff2" };
@@ -59,7 +63,8 @@ const server = http.createServer((req, res) => {
   });
 });
 await new Promise((r) => server.listen(0, "127.0.0.1", r));
-const base = `http://127.0.0.1:${server.address().port}/${path.basename(scene)}`;
+const base = `http://127.0.0.1:${server.address().port}/` +
+  `${path.basename(sceneDir)}/${path.basename(scene)}`;
 
 const prof = fs.mkdtempSync(os.tmpdir() + "/render-");
 const port = 9300 + Math.floor(Math.random() * 300);
@@ -94,8 +99,13 @@ try {
 
     const ok = await call("Runtime.evaluate", { expression: "typeof setFrame === 'function'", returnByValue: true });
     if (!ok.result.value) throw new Error(`${scene} does not define window.setFrame(t)`);
-    // give webfonts and images a chance before the first capture
+    // Webfonts and images must be decoded before the first capture, or frame 0
+    // ships without the photograph the rest of the clip has.
     await call("Runtime.evaluate", { expression: "document.fonts ? document.fonts.ready : 1", awaitPromise: true });
+    await call("Runtime.evaluate", {
+      expression: `Promise.all([...document.images].map(i => i.decode().catch(() => {})))`,
+      awaitPromise: true,
+    });
 
     const dir = path.join(frames, crop.name);
     fs.mkdirSync(dir);
