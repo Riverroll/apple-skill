@@ -21,20 +21,28 @@ and re-encoded to WebP. Nothing is hotlinked. The crop is the only alteration.
 | `slide-sea.webp` | [USGS Kīlauea multimediaFile-2066](https://commons.wikimedia.org/wiki/File:USGS_K%C4%ABlauea_multimediaFile-2066.jpg) | U.S. Geological Survey | Public domain |
 | `slide-vent.webp` | [Fountaining at a fissure within Halemaʻumaʻu crater, January 2021](https://commons.wikimedia.org/wiki/File:Fountaining_at_a_fissure_within_Halema%CA%BBuma%CA%BBu_crater,_January_2021.jpg) | M. Patrick, U.S. Geological Survey | Public domain |
 
-## The clips in `example/media/summit/`
+## The clips in `example/media/summit/` and `example/media/flow/`
 
-`example/motion/` needs moving pictures, and nothing in this repository may be
-Apple's. So the clips were **made from a photograph already credited above** —
-`hero-2400.webp`, the USGS lava-lake frame — with `tools/make-clip.sh`, which
-applies a 1.11&times; push over three seconds and cuts the three crops
-`references/media.md` measured off apple.com.
+The example pages need moving pictures, and nothing in this repository may be
+Apple's. So the clips were **made from photographs already credited above** —
+`hero-2400.webp`, the USGS lava-lake frame, for `summit/`, and
+`band-2400.webp`, the Mauna Loa flow, for `flow/` — with
+`tools/make-clip.sh`, which applies a 1.11&times; push over three seconds and
+cuts the three crops `references/media.md` measured off apple.com.
+
+`flow/` was built with `CRF_BUMP=6`. At the default CRFs that footage missed
+the byte budget by a third, which is the case the reference describes: an
+aerial of braided lava channels is close to worst case for h264, so the
+bitrate goes where the texture is. The honest first move is a simpler frame;
+this one is kept because the page wants that picture.
 
 | file | pixels | derived from | licence |
 |---|---|---|---|
-| `small.mp4`, `small_2x.mp4` | 420&times;480, 840&times;960 | [Kilauea Lava Lake (12792432484)](https://commons.wikimedia.org/wiki/File:Kilauea_Lava_Lake_(12792432484).jpg), U.S. Geological Survey | Public domain |
-| `medium.mp4`, `medium_2x.mp4` | 934&times;576, 1868&times;1152 | the same frame | Public domain |
-| `large.mp4`, `large_2x.mp4` | 1260&times;612, 2520&times;1224 | the same frame | Public domain |
-| `start-small.webp`, `start-medium.webp`, `start-large.webp` | frame 0 of each crop | the same frame | Public domain |
+| `summit/small.mp4`, `small_2x.mp4` | 420&times;480, 840&times;960 | [Kilauea Lava Lake (12792432484)](https://commons.wikimedia.org/wiki/File:Kilauea_Lava_Lake_(12792432484).jpg), U.S. Geological Survey | Public domain |
+| `summit/medium.mp4`, `medium_2x.mp4` | 934&times;576, 1868&times;1152 | the same frame | Public domain |
+| `summit/large.mp4`, `large_2x.mp4` | 1260&times;612, 2520&times;1224 | the same frame | Public domain |
+| `flow/small.mp4` … `flow/large_2x.mp4` | the same six sizes | [November 30, 2022 — Mauna Loa Lava Flow (111218)](https://commons.wikimedia.org/wiki/File:November_30,_2022_%E2%80%94_Mauna_Loa_Lava_Flow_(111218).jpg), USGS Hawaiian Volcano Observatory | Public domain |
+| `start-small.webp`, `start-medium.webp`, `start-large.webp` in each | frame 0 of each crop | the frame that directory was built from | Public domain |
 
 A pan across a public-domain photograph is a derivative of a public-domain
 work, so the result carries no new restriction. It is also the honest fallback

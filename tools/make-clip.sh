@@ -9,8 +9,11 @@
 # densities each: portrait on phones, 1.62 on tablets, 2.06 on desktop. The
 # crop is re-framed per breakpoint on purpose; a letterboxed 16:9 render into a
 # phone slot is the thing this avoids.
+# CRF_BUMP raises every CRF by that many points, for footage too textured to
+# make the budget at the defaults — see "What actually drives the weight" in
+# references/media.md. Prefer a simpler frame; this is the second resort.
 set -eu
-src=${1:?source file}; out=${2:?output directory}
+src=${1:?source file}; out=${2:?output directory}; bump=${CRF_BUMP:-0}
 mkdir -p "$out"
 
 # name  w     h     crf   (aspect follows from w/h)
@@ -19,12 +22,15 @@ set -- "small 420 480 26" "small_2x 840 960 24" \
        "large 1260 612 25" "large_2x 2520 1224 25"
 
 for spec in "$@"; do
-  set -- $spec; name=$1 w=$2 h=$3 crf=$4
+  set -- $spec; name=$1 w=$2 h=$3 crf=$(( $4 + bump ))
   ar=$(echo "$w $h" | awk '{printf "%.4f", $1/$2}')
 
   case $(file -b --mime-type "$src") in
-    image/*)  # a photograph: 1.11x push over three seconds, 3x oversampled
-      vf="scale=$((w*3)):-1,zoompan=z='1+0.0012*on':d=90:s=${w}x${h}:fps=30,format=yuv420p"
+    image/*)  # a photograph: 1.11x push over three seconds, 3x oversampled.
+              # Cover the target aspect before the pan — a 2.67 source cropped
+              # to a 0.88 portrait has to be filled first, or zoompan pads it.
+      vf="scale=$((w*3)):$((h*3)):force_original_aspect_ratio=increase"
+      vf="$vf,crop=$((w*3)):$((h*3)),zoompan=z='1+0.0012*on':d=90:s=${w}x${h}:fps=30,format=yuv420p"
       in="-loop 1 -i $src -t 3" ;;
     *)        # a master: crop to the aspect this breakpoint wants, then fit
       vf="fps=30,crop=ih*$ar:ih,scale=$w:$h:flags=lanczos,format=yuv420p"

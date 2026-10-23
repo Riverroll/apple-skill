@@ -96,6 +96,7 @@
   .hero-top, .hero-foot { width: 100%; }
 
   .band { position: relative; height: 92vh; overflow: hidden; background: var(--surface-alt); }
+  .band .media-stack { height: 100%; }
   .band--tall { height: 78vh; }
   /* A caption on a photograph needs the same scrim treatment as a headline:
      it is text on an image, and the image does not owe it contrast. */
@@ -328,8 +329,22 @@
 
   <!-- loud: full-bleed, past the gutters, so it is the subject and not an asset -->
   <figure class="band" style="margin: 0">
-    <img src="media/band-2400.webp" width="2400" height="900" loading="lazy" decoding="async"
-         alt="An aerial view of a lava flow spreading across black ground, the channel braiding into dozens of bright orange threads.">
+    <!-- The one clip on this page. Three seconds, silent, re-cropped per
+         breakpoint, with the photograph underneath it in the same grid cell —
+         references/media.md. Everything else here is a still, which is the
+         right ratio: a page carries a clip per two or three sections, not one
+         per section. -->
+    <div class="media-stack" role="img"
+         aria-label="An aerial view of a lava flow spreading across black ground, the braided channel drifting slowly past as the camera pushes in.">
+      <video class="media-layer media-clip" preload="none" muted playsinline
+             data-basepath="media/flow/" data-ladder="small,medium,large"></video>
+      <picture class="media-layer media-still">
+        <source media="(min-width: 780px)" srcset="media/flow/start-large.webp">
+        <source media="(min-width: 570px)" srcset="media/flow/start-medium.webp">
+        <img src="media/flow/start-small.webp" width="420" height="480" alt=""
+             loading="lazy" decoding="async">
+      </picture>
+    </div>
     <div class="band-head">
       <h2 class="t-headline-elevated" data-reveal>A river finds its grade.</h2>
     </div>
@@ -505,6 +520,31 @@
   if (!reduced && CSS.supports("position", "sticky") && CSS.supports("--a", "0")
       && matchMedia(heightRange).matches) {
     document.documentElement.classList.add("enhance-xp");
+  }
+
+  // The clip: lazy, breakpoint-aware, plays before it is on screen, and never
+  // paused on exit. With reduced motion it is not fetched at all and the
+  // photograph underneath is what the page shows. references/media.md.
+  const MEDIA_BP = { small: 0, medium: 570, large: 780, xlarge: 1280 };
+  for (const v of document.querySelectorAll("video[data-basepath]")) {
+    const stack = v.closest(".media-stack");
+    if (reduced) { stack.hidden = true; continue; }
+    const have = (v.dataset.ladder || "small,medium,large").split(",");
+    const pick = () => {
+      let name = "small";
+      for (const [k, px] of Object.entries(MEDIA_BP)) if (innerWidth >= px && have.includes(k)) name = k;
+      return name + (devicePixelRatio > 1 ? "_2x" : "");
+    };
+    new IntersectionObserver(([e], io) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      v.src = v.dataset.basepath + pick() + ".mp4";
+      const bail = setTimeout(() => v.remove(), Number(v.dataset.loadTimeout) || 30000);
+      v.addEventListener("loadedmetadata", () => clearTimeout(bail), { once: true });
+      v.addEventListener("loadeddata", () => v.classList.add("media-clip--ready"), { once: true });
+    }, { rootMargin: "150% 0px" }).observe(stack);
+    new IntersectionObserver(([e]) => { if (e.isIntersecting) v.play().catch(() => {}); },
+      { rootMargin: "50% 0px" }).observe(stack);
   }
 
   // The hidden state is applied here, not in CSS, so the page stays readable
