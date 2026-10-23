@@ -131,7 +131,9 @@ html.enhance-xp [data-staggered].is-in [data-staggered-item]{opacity:1;translate
     <picture class="positioned-media-element start-frame">
       <source media="(min-width:780px)" srcset="../media/summit/start-large.webp">
       <source media="(min-width:570px)" srcset="../media/summit/start-medium.webp">
-      <img src="../media/summit/start-small.webp" alt="" width="420" height="480">
+      <!-- the clip is lazy, so this is the LCP element: it gets the priority -->
+      <img src="../media/summit/start-small.webp" alt="" width="420" height="480"
+           fetchpriority="high">
     </picture>
   </div>
   <div class="copy"><div class="col">
@@ -147,10 +149,10 @@ html.enhance-xp [data-staggered].is-in [data-staggered-item]{opacity:1;translate
   <p>The outgoing frame leaves in 300ms. The incoming one takes 600ms and waits
     250ms before starting, so you never see both at half strength.</p>
   <div class="frames" data-crossfade>
-    <div class="frame" data-current><img src="../media/slide-fountain.webp" alt="A lava fountain breaking the surface of the crater floor"></div>
-    <div class="frame" hidden><img src="../media/slide-curtain.webp" alt="A curtain of fire along a fissure vent"></div>
-    <div class="frame" hidden><img src="../media/slide-vent.webp" alt="Steam and gas rising from an active vent"></div>
-    <div class="frame" hidden><img src="../media/slide-sea.webp" alt="A lava flow entering the sea in a cloud of steam"></div>
+    <div class="frame" data-current><img src="../media/slide-fountain.webp" alt="A lava fountain breaking the surface of the crater floor" loading="lazy" decoding="async"></div>
+    <div class="frame" hidden><img src="../media/slide-curtain.webp" alt="A curtain of fire along a fissure vent" loading="lazy" decoding="async"></div>
+    <div class="frame" hidden><img src="../media/slide-vent.webp" alt="Steam and gas rising from an active vent" loading="lazy" decoding="async"></div>
+    <div class="frame" hidden><img src="../media/slide-sea.webp" alt="A lava flow entering the sea in a cloud of steam" loading="lazy" decoding="async"></div>
   </div>
   <ul class="dots" data-crossfade-nav></ul>
 </section>
@@ -160,7 +162,7 @@ html.enhance-xp [data-staggered].is-in [data-staggered-item]{opacity:1;translate
     <p>One scalar runs 0&nbsp;&rarr;&nbsp;1 across the scroll and drives the side
       inset and the corner radius together. Reduced motion pins it at 1.</p></div>
   <div class="open-panel" data-open-panel>
-    <img src="../media/band-2400.webp" alt="The caldera rim at dawn, steam along its length">
+    <img src="../media/band-2400.webp" alt="The caldera rim at dawn, steam along its length" loading="lazy" decoding="async">
   </div>
 </section>
 
@@ -194,13 +196,13 @@ html.enhance-xp [data-staggered].is-in [data-staggered-item]{opacity:1;translate
     move, so each tile has arrived before it finishes settling.</p>
   <ul class="grid" data-staggered>
     <li data-staggered-item style="--i:0"><figure style="margin:0">
-      <img src="../media/card-summit.webp" alt="The summit caldera from the north rim">
+      <img src="../media/card-summit.webp" alt="The summit caldera from the north rim" loading="lazy" decoding="async">
       <figcaption><p class="cap">Summit</p><p>Halema&#699;uma&#699;u, after the collapse.</p></figcaption></figure></li>
     <li data-staggered-item style="--i:1"><figure style="margin:0">
-      <img src="../media/card-rift.webp" alt="The east rift zone cutting through forest">
+      <img src="../media/card-rift.webp" alt="The east rift zone cutting through forest" loading="lazy" decoding="async">
       <figcaption><p class="cap">East rift</p><p>Where the ground opened in 2018.</p></figcaption></figure></li>
     <li data-staggered-item style="--i:2"><figure style="margin:0">
-      <img src="../media/card-sample.webp" alt="A geologist taking a molten sample from a flow">
+      <img src="../media/card-sample.webp" alt="A geologist taking a molten sample from a flow" loading="lazy" decoding="async">
       <figcaption><p class="cap">Fieldwork</p><p>A sample, taken at 1150&nbsp;&deg;C.</p></figcaption></figure></li>
   </ul>
 </section>

@@ -229,12 +229,19 @@ try {
     const img = document.querySelector(".start-frame img");
     return { src: v.getAttribute("src") || "", preload: v.preload,
              poster: v.getAttribute("poster"),
+             priority: img.getAttribute("fetchpriority"), lazy: img.loading,
+             deferred: document.querySelectorAll('img[loading="lazy"]').length,
              stillPainted: img.naturalWidth > 0 && img.getBoundingClientRect().height > 0 };
   })()`);
   ok("nothing is fetched at parse time", parsed.src === "", `src="${parsed.src}"`);
   ok("preload is none", parsed.preload === "none", parsed.preload);
   ok("the still is a picture, not a poster", !parsed.poster && parsed.stillPainted,
      "poster takes one URL and cannot be art-directed");
+  ok("the still carries the priority, since it is the LCP element",
+     parsed.priority === "high" && parsed.lazy !== "lazy",
+     `fetchpriority=${parsed.priority} loading=${parsed.lazy}`);
+  ok("everything below the fold is deferred", parsed.deferred >= 6,
+     `${parsed.deferred} image(s) with loading=lazy`);
 
   // ----------------------------------------------------- and once it runs
   await open();

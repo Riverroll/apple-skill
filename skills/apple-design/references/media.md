@@ -81,6 +81,9 @@ timing tokens, so a new page gets them without copying from this file.
 - `grid-area: 1 / 1` on every layer, not `position: absolute`. The stack keeps
   the intrinsic height of its content, so the tile does not collapse before the
   video loads.
+- A hero usually carries a **third layer, the end frame** — the clip's last
+  frame — so a clip that unloads after playing does not snap back to frame 0.
+  See **The end frame** below.
 - The **start-frame is a `<picture>`, not the `poster` attribute.** `poster`
   takes one URL and cannot be art-directed; a `<picture>` gets the same
   per-breakpoint crops as the clip. Frame 0 of the clip, exported as a still.
@@ -262,6 +265,63 @@ ffmpeg -i large.mp4 -frames:v 1 -q:v 2 start-large.webp
 
 Budget: **under 400 KB per 1× clip, under 1 MB at 2×.** A page carrying ten
 clips at those sizes is lighter than one unoptimised hero photograph.
+
+## The still is the LCP element, so it gets the priority
+
+The clip is lazy by design, which means **the photograph underneath it is what
+the browser paints first and what Largest Contentful Paint measures.** Treat it
+as the page's most important image, and the clip as something that arrives
+afterwards.
+
+What the hero actually ships, measured:
+
+| | pixels | bytes |
+|---|---|---|
+| `start_small.jpg` | 740 × 570 | 66 KB |
+| `start_small_2x.jpg` | 1480 × 1140 | 147 KB |
+| `start_medium.jpg` / `start_large.jpg` | 966 × 640 | 92 / 95 KB |
+| `start_medium_2x.jpg` | 1932 × 1280 | 194 KB |
+
+- The still's dimensions **match the clip's exactly** — it is frame 0 at the
+  same size, not a separately art-directed photograph. The hero clip on that
+  page is 966 × 640; so is its still.
+- Three `<source>` entries, two actual renders: `medium` and `large` are the
+  same file. Ship a render per *distinct* size, not per breakpoint name.
+- They are **JPEG with a `1x, 2x` srcset**, not WebP. Use WebP or AVIF if your
+  floor allows it — the point is the ladder, not the codec.
+- **The stills switch on the layout breakpoints (`max-width: 734px`), while
+  the clip switches on the media breakpoints (570 / 780 / 1280).** Two
+  different ladders in the same component, because a `<picture>` can use the
+  layout's own query and a `<video>` cannot use `srcset` at all.
+
+Priority, as shipped on a product page carrying 197 `<picture>` elements:
+
+```html
+<img src="hero/start-small.jpg" alt="" fetchpriority="high">
+```
+
+- **Exactly three images get `fetchpriority="high"`**: the hero start frame,
+  the hero end frame, and the hero still. Everything else takes the default.
+  More than a handful of high-priority images is the same as none.
+- There is **no `<link rel="preload">` anywhere in the head** — not one, on any
+  page measured. A `fetchpriority` attribute on the element that is already in
+  the markup does the same job without a second URL to keep in sync.
+- There is **no `loading="lazy"` either**, because their own scroll windows
+  already hold everything back. Without such a system, use the native
+  attributes: `loading="lazy" decoding="async"` on everything below the fold,
+  and neither on the hero.
+- The value must be exactly `high`. Apple's own shipped markup carries
+  `fetchpriority="high,"` with a trailing comma, which is invalid and silently
+  falls back to `auto` — a reminder to check what the attribute actually
+  parses as rather than that it is present.
+
+### The end frame
+
+The hero ships a *third* picture: the clip's last frame, as its own ladder
+(91–361 KB). The clip plays once, the end frame holds the state it finished in,
+and the video element unloads itself (`unloadAtEnd`) to give the buffer back.
+Without an end frame, a clip that unloads snaps back to frame 0 — the product
+closes again after you watched it open.
 
 ## Transitions between images
 

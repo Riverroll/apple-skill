@@ -274,6 +274,29 @@ function probeFn() {
     const u = n.currentSrc || n.getAttribute("src") || "";
     if (u) out.media.srcs.push(u.split("/").pop());
   }
+
+  // The clip is lazy, so the still underneath it is what LCP measures. Which
+  // image that is: the largest one touching the first viewport.
+  out.media.high = document.querySelectorAll('[fetchpriority="high"]').length;
+  let hero = null, heroArea = 0, below = 0, deferred = 0, custom = 0;
+  for (const img of document.querySelectorAll("img")) {
+    const b = img.getBoundingClientRect();
+    if (b.width < 8 || b.height < 8) continue;
+    const area = b.width * b.height;
+    if (b.top < innerHeight && b.bottom > 0) {
+      if (area > heroArea) { heroArea = area; hero = img; }
+    } else if (b.top >= innerHeight) {
+      below++;
+      if (img.loading === "lazy") deferred++;
+      for (const a of img.attributes) if (/^data-(lazy|src|srcset|download)/.test(a.name)) { custom++; break; }
+    }
+  }
+  out.media.hero = hero ? {
+    priority: hero.getAttribute("fetchpriority"),
+    lazy: hero.loading, w: Math.round(hero.getBoundingClientRect().width),
+    where: pathOf(hero),
+  } : null;
+  out.media.belowFold = { total: below, deferred, custom };
   for (const sheet of document.styleSheets) {
     try {
       for (const r of sheet.cssRules)
@@ -1049,6 +1072,25 @@ if (!useErp) {
     add(7, `the same ${wide.size} media file(s) are served at 1440px and at 500px`,
         [...wide].slice(0, 6).join("  "),
         "Apple re-cuts the crop per breakpoint rather than scaling one render: the same three seconds ship as a 0.88 portrait on phones, a 1.62 on tablets and a 2.06 on desktop. A 16:9 render letterboxed into a phone slot leaves the subject small and centred while the layout around it is full-bleed, which is most of what reads as unfinished. See references/media.md and the art-direction rules in references/imagery.md.");
+
+  // priority: the still the browser paints first is the page's LCP element
+  const hero = md.hero;
+  if (clips.length && hero && hero.priority !== "high")
+    add(7, "the image the browser paints first has default priority",
+        `${hero.w}px wide${hero.priority ? `, fetchpriority="${hero.priority}"` : ", no fetchpriority"}${hero.lazy === "lazy" ? ", and loading=lazy" : ""}`,
+        'The clips are lazy by design, so the still underneath the hero is what Largest Contentful Paint measures. apple.com marks exactly three images high — the hero still, its start frame and its end frame — and ships no <link rel="preload"> at all, on any page. One attribute on the element already in the markup, no second URL to keep in sync. The value has to be exactly "high": their own markup carries a trailing comma that silently falls back to auto.',
+        hero.where ? [hero.where] : []);
+
+  if (md.high > 5)
+    add(5, `${md.high} images marked fetchpriority="high"`,
+        "",
+        "apple.com marks three, on a page carrying about 197 of them. Past a handful the hint says nothing: everything urgent is the same as nothing urgent.");
+
+  const bf = md.belowFold || { total: 0, deferred: 0, custom: 0 };
+  if (bf.total >= 8 && bf.deferred === 0 && bf.custom === 0)
+    add(6, `${bf.total} images below the fold, none of them deferred`,
+        "no loading=\"lazy\" and no lazy-loading attributes of your own",
+        'apple.com ships no loading="lazy" either, but only because its own scroll windows hold every asset back until two viewports out. Without a system like that, the native attributes are the whole job: loading="lazy" and decoding="async" on everything below the fold, and neither on the hero.');
 
   if (md.moving > 0 && !md.reducedMotionRule)
     add(8, `${md.moving} element(s) animate and nothing honours reduced motion`,
