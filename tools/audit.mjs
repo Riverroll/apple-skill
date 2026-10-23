@@ -923,6 +923,15 @@ if (!useErp && sl.screens) {
         "a reader can scroll a whole viewport and see only colour and type",
         "Apple's own rate is about one screen in five, and those are the rests — spec tables, footnotes, the footer. A rest only reads as a rest if something came before it.");
 
+  // The inverse failure, and the one that is easy to walk into while fixing
+  // the first: a page that is nothing but full-bleed photography. apple.com
+  // runs roughly 3 parts picture to 1 part text, not 60 to 1 — the copy is
+  // what makes it a page rather than a gallery.
+  if (sl.media > 0.5 && sl.text < 0.05)
+    add(9, `the page is ${pc(sl.media)} picture and only ${pc(sl.text)} text`,
+        `media ${pc(sl.media)} · flat ${pc(sl.flat)} · text ${pc(sl.text)}`,
+        "apple.com's median is 38% media against 12% text, about three to one. Past roughly eight to one the pictures stop supporting an argument and become the whole page, and a reader has nothing to take away. Give each section its paragraph back. See references/composition.md.");
+
   if (sl.media >= 0.15 && sl.flat > 0.7)
     add(8, `${pc(sl.flat)} of the page is flat surface colour`,
         `media ${pc(sl.media)} · text ${pc(sl.text)} · gradient ${pc(sl.gradient)}`,

@@ -57,8 +57,32 @@ const walk = (d, acc = []) => {
   return acc;
 };
 const files = walk(ROOT);
-const banned = files.filter((f) => /\.(woff2?|ttf|otf|eot|jpe?g|png|gif|webp|mp4|mov|heic|svg)$/i.test(f));
-ok("ships no font/image/video assets", banned.length === 0, banned.map((f) => path.relative(ROOT, f)).join(", "));
+// Fonts are banned outright: shipping a typeface is how Apple's actual
+// assets leak into a repo that claims to teach only the system.
+const fonts = files.filter((f) => /\.(woff2?|ttf|otf|eot)$/i.test(f));
+ok("ships no font files", fonts.length === 0, fonts.map((f) => path.relative(ROOT, f)).join(", "));
+
+// Pictures are allowed in exactly one place, because the example page needs a
+// subject — a page of correct tokens with no imagery measures as soulless, see
+// references/composition.md. Everywhere else they are still banned.
+const MEDIA_DIR = path.join(ROOT, "example", "media");
+const pictures = files.filter((f) => /\.(jpe?g|png|gif|webp|avif|mp4|mov|heic|svg)$/i.test(f));
+const strays = pictures.filter((f) => !f.startsWith(MEDIA_DIR + path.sep));
+ok("ships no images outside example/media", strays.length === 0,
+   strays.map((f) => path.relative(ROOT, f)).join(", "));
+
+// Every one of them has to be traceable to a licence. An image whose
+// provenance nobody wrote down is the thing this rule exists to stop.
+const creditsPath = path.join(ROOT, "example", "CREDITS.md");
+const credits = fs.existsSync(creditsPath) ? fs.readFileSync(creditsPath, "utf8") : "";
+ok("every bundled image is named in example/CREDITS.md",
+   pictures.length === 0 || (credits.length > 0 &&
+     pictures.every((f) => credits.includes(path.basename(f)))),
+   pictures.map((f) => path.basename(f)).filter((b) => !credits.includes(b)).join(", "));
+
+// ...and to a licence that permits redistribution without infecting the repo.
+ok("bundled images are public domain or permissively licensed",
+   pictures.length === 0 || /public domain|CC0|CC BY(?!-SA)/i.test(credits));
 ok("attributes Apple trademarks", /trademarks of Apple/i.test(fs.readFileSync(path.join(ROOT, "README.md"), "utf8")));
 ok("states it ships none of Apple's content", /ships none of Apple's content|carries none of Apple's content/i.test(skillMd + fs.readFileSync(path.join(ROOT, "README.md"), "utf8")));
 

@@ -3,26 +3,35 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Northwind Vessel</title>
+<title>Kīlauea — a page built on the record</title>
 <link rel="stylesheet" href="../skills/apple-design/assets/apple-base.css">
+<link rel="preload" as="image" href="media/hero-2400.webp"
+      imagesrcset="media/hero-1600.webp 1600w, media/hero-2400.webp 2400w"
+      imagesizes="100vw" media="(min-width: 735px)">
 <style>
   /* The point of this page: it uses Apple's proportions, rhythm, tracking and
-     motion, and none of Apple's colours. The palette below is Northwind's own —
-     warm, dark, nothing like apple.com — and every relationship the system
-     asks for still holds: three separated ink steps, an alt surface that is a
-     near neighbour of the base, one accent readable on both. */
+     motion, and none of Apple's colours, fonts or pictures. The palette is
+     taken from the photographs themselves — basalt and incandescence — and
+     every relationship the system asks for still holds: three separated ink
+     steps, an alt surface that is a near neighbour of the base, one accent
+     readable on both.
+
+     The photographs are public domain, from the U.S. Geological Survey and the
+     National Park Service. See CREDITS.md. They are here because a page with
+     correct tokens and no subject is a blank canvas: see
+     references/composition.md, which measures exactly that. */
   :root {
     --ink:             #f7f3ec;
     --ink-secondary:   #b3a99b;
     --ink-muted:       #8a8075;
-    --surface:         #14110e;
-    --surface-alt:     #1b1714;
+    --surface:         #0a0807;
+    --surface-alt:     #121010;
     --surface-inverse: #f7f3ec;
-    --ink-inverse:     #14110e;
+    --ink-inverse:     #0a0807;
     --accent:          #c2703a;
     --accent-hover:    #cf7b43;
     --accent-active:   #b1652f;
-    --on-accent:       #14110e;   /* the accent is light, so its text is dark */
+    --on-accent:       #0a0807;   /* the accent is light, so its text is dark */
     --font-display: "Helvetica Neue", Helvetica, Arial, sans-serif;
     --font-text:    "Helvetica Neue", Helvetica, Arial, sans-serif;
   }
@@ -31,82 +40,449 @@
     color: color-mix(in srgb, var(--ink-inverse) 62%, var(--surface-inverse));
   }
 
-  .feature-grid { display: grid; gap: 20px; grid-template-columns: repeat(3, 1fr); width: 100%; margin-top: 2em; }
-  @media (max-width: 1068px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 734px)  { .feature-grid { grid-template-columns: 1fr; } }
-  .feature-card { border-radius: var(--radius-card); background: var(--surface-alt); overflow: hidden; padding: 40px 28px; text-align: left; }
-  .section--alt .feature-card { background: var(--surface); }
-  .card-media { aspect-ratio: 3 / 2; border-radius: var(--radius-tile); margin-bottom: var(--headline-plus-first);
-                background: linear-gradient(135deg, #2a231c, #3a2f24); }
+  /* The hero takes the TOP of the headline ladder — 96px, the step above
+     .t-headline-elevated. Measured: 96px/1.0416666667/600/-0.015em, re-picked
+     to 48px on phone rather than scaled. apple.com's median ratio between the
+     largest type and the body size is x6.7. */
+  .t-headline-super { font-size: 96px; line-height: 1.0416666667; font-weight: 600;
+                      letter-spacing: -0.015em; font-family: var(--font-display); }
+  @media (max-width: 1068px) { .t-headline-super { font-size: 64px; letter-spacing: -0.009em; line-height: 1.0625; } }
+  @media (max-width: 734px)  { .t-headline-super { font-size: 48px; letter-spacing: -0.003em; line-height: 1.0834933333; } }
+
+  /* --- media -------------------------------------------------------------
+     Every image declares its intrinsic size so nothing reflows when it lands,
+     and crops are chosen per aspect rather than letting one file be squeezed
+     into every frame. references/imagery.md. */
+  .bed { position: absolute; inset: 0; z-index: 0; }
+  .bed img, .band img, .card-media img, .gallery-slide img, .pinned-media img {
+    display: block; width: 100%; height: 100%; object-fit: cover;
+  }
+
+  .hero { position: relative; min-height: 100vh; display: flex; align-items: flex-start;
+          padding: 0 var(--gutter); overflow: hidden; background: var(--surface); }
+  /* A bright photograph on a dark page is a hole punched in the page unless
+     the frame dissolves into the surface. The scrim is a gradient, never a
+     hard-edged rectangle and never a brightness filter over the whole
+     picture — both of those make the photograph worse while leaving the
+     mismatch. references/dark.md. */
+  .hero .bed::after {
+    content: ""; position: absolute; inset: 0;
+    /* Two scrims, because the copy lives at the two ends and the subject owns
+       the middle. Fighting a bright photograph with one flat overlay dims the
+       picture everywhere and still loses under the brightest part of it. */
+    background:
+      linear-gradient(180deg, var(--surface) 0%,
+        color-mix(in srgb, var(--surface) 86%, transparent) 16%,
+        transparent 40%),
+      linear-gradient(0deg, var(--surface) 0%,
+        color-mix(in srgb, var(--surface) 88%, transparent) 20%,
+        transparent 46%);
+  }
+  /* Subject and copy do not share the middle — one of them yields. The crater
+     takes the right and bleeds off two edges; the copy takes the left third,
+     left-aligned, which is also why the headline can be 96px. */
+  .hero .section-content { position: relative; z-index: 1; text-align: center;
+                           align-items: center; justify-content: space-between;
+                           min-height: 100vh; padding: 7vh 0 6vh; }
+  .hero .cta-row { justify-content: center; }
+  .hero .t-intro { max-width: 34ch; margin-inline: auto; }
+  .hero-top, .hero-foot { width: 100%; }
+
+  .band { position: relative; height: 92vh; overflow: hidden; background: var(--surface-alt); }
+  .band--tall { height: 78vh; }
+  /* A caption on a photograph needs the same scrim treatment as a headline:
+     it is text on an image, and the image does not owe it contrast. */
+  .band-head { position: absolute; inset-inline: var(--gutter); top: 12vh; z-index: 1;
+               text-align: center; text-shadow: 0 1px 32px rgba(0,0,0,0.5); }
+  .band figcaption, .slide-label {
+    position: absolute; left: var(--gutter); bottom: 32px; z-index: 1; margin: 0;
+    max-width: 46ch; text-shadow: 0 1px 24px rgba(0, 0, 0, 0.55);
+  }
+  .band::after, .gallery-slide::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(0deg, color-mix(in srgb, var(--surface) 88%, transparent) 0%,
+                color-mix(in srgb, var(--surface) 34%, transparent) 30%, transparent 58%);
+  }
+  .band figcaption .t-label { display: block; color: var(--ink); }
+  .band figcaption .t-caption { display: block; color: var(--ink-secondary); margin-top: 0.4em; }
+
+  /* Three equal cards with an inset picture and 28px of padding is the shape
+     every template ships, and references/composition.md lists it as a tell.
+     Apple's feature sections are alternating full-bleed rows: the picture
+     runs off the viewport edge and the copy holds a narrow column opposite
+     it, so the subject is the page rather than an item on the page. */
+  .row { display: grid; grid-template-columns: 1fr 1fr; align-items: center;
+         min-height: 86vh; background: var(--surface); }
+  .row-media { position: relative; height: 86vh; overflow: hidden; }
+  .row-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .row-copy { padding-inline: clamp(32px, 6vw, 96px); max-width: 38rem; }
+  .row--flip .row-media { order: -1; }
+  .row--flip .row-copy { justify-self: end; }
+  @media (max-width: 734px) {
+    .row { grid-template-columns: 1fr; min-height: 0; }
+    .row-media, .row--flip .row-media { height: 54vh; order: -1; }
+    .row-copy { padding: 40px var(--gutter) 64px; max-width: none; }
+  }
 
   /* scroll-linked section — only --scroll-duration is page-specific */
-  .section-pinned { --scroll-duration: 250vh; padding-inline: var(--gutter); background: var(--surface-alt); }
+  .section-pinned { --scroll-duration: 250vh; background: var(--surface); }
+  html.enhance-xp .section-pinned .sticky-content { display: flex; align-items: flex-end;
+    padding: 0 var(--gutter) 10vh; }
+  html:not(.enhance-xp) .section-pinned .pinned-media { position: relative; aspect-ratio: 16 / 9; }
+  html:not(.enhance-xp) .section-pinned .sticky-content { padding-bottom: 64px; }
   @media (max-width: 734px) { .section-pinned { --scroll-duration: 180vh; } }
-  .vessel { width: 180px; height: 300px; border-radius: 90px / 40px; margin-inline: auto;
-            background: linear-gradient(100deg, #3a2f24 0%, #6b5744 45%, #2a231c 100%);
-            transition: transform 850ms var(--ease-dramatic); }
+  /* The scroll-linked move is one slow push into the photograph, and the copy
+     steps once at the midpoint. The media is held; the sentence changes. A
+     subject that spins on scroll is a toy — references/motion.md is about
+     moving one thing to say one thing. */
+  .pinned-media { position: absolute; inset: 0; overflow: hidden; background: var(--surface); }
+  .pinned-media img { width: 100%; height: 100%; object-fit: cover;
+                      transform-origin: 54% 62%; scale: calc(1 + var(--p, 0) * 0.08); }
+  .pinned-media::after { content: ""; position: absolute; inset: 0;
+    background: linear-gradient(0deg, color-mix(in srgb, var(--surface) 92%, transparent) 0%,
+                color-mix(in srgb, var(--surface) 40%, transparent) 34%, transparent 62%); }
+  .pinned-copy { position: relative; z-index: 1; }
+  .pinned-copy > * { transition: opacity 400ms var(--ease-out-soft); }
+  .pinned-copy .step-2 { position: absolute; inset-inline: 0; top: 0; }
+  /* The two blocks must not be half-visible at the same time — crossfading
+     copy over itself is double vision, not a transition. They are swapped
+     with a beat of nothing between them: the first is gone before the second
+     starts. */
+  html.enhance-xp .pinned-copy .step-1 { opacity: var(--t1, 1); }
+  html.enhance-xp .pinned-copy .step-2 { opacity: var(--t2, 0); }
+  /* Without the enhancement gate both blocks are on top of each other, so the
+     fallback shows the first and drops the second out of the flow entirely. */
+  html:not(.enhance-xp) .pinned-copy .step-2 { display: none; }
+  html.enhance-xp .section-pinned .sticky-content { z-index: 1; }
+
+  /* --- the gallery: dotnav and paddlenav, at the measured values ---------
+     Token names and every number here come from apple.com's own shipped
+     --sk-dotnav-* and --sk-paddlenav-* blocks. See references/micro.md. */
+  .gallery { position: relative; background: var(--surface-alt); overflow: hidden; }
+  .gallery-track { display: flex; list-style: none; margin: 0; padding: 0; overflow-x: auto; scroll-snap-type: x mandatory;
+                   scrollbar-width: none; -ms-overflow-style: none; }
+  .gallery-track::-webkit-scrollbar { display: none; }
+  .gallery-slide { flex: 0 0 100%; scroll-snap-align: center; height: 86vh;
+                   position: relative; }
+  @media (max-width: 734px) { .gallery-slide { height: 64vh; } }
+  /* the name sits in the composition's quiet third, not floating under it */
+  .slide-label { bottom: 96px; transition: opacity 400ms var(--ease-out-soft); }
+  .slide-label .t-label { display: block; color: var(--ink); }
+  .slide-label .t-caption { display: block; color: var(--ink-secondary); margin-top: 0.4em; }
+  .gallery-slide:not(.is-current) .slide-label { opacity: 0; }
+
+  .paddlenav {
+    --sk-paddlenav-diameter: 36px;
+    --sk-paddlenav-arrow-color: rgba(247, 243, 236, 0.80);
+    --sk-paddlenav-arrow-color-hover: rgb(247, 243, 236);
+    --sk-paddlenav-background: rgba(20, 17, 14, 0.56);
+    --sk-paddlenav-background-hover: rgba(20, 17, 14, 0.64);
+    position: absolute; inset-block: 0; inset-inline: 0; pointer-events: none;
+  }
+  .paddlenav-arrow {
+    position: absolute; top: 50%; translate: 0 -50%; pointer-events: auto;
+    width: var(--sk-paddlenav-diameter); height: var(--sk-paddlenav-diameter);
+    /* a 36px circle. The pill token gives the same shape without adding a
+       fourth corner radius to the page. */
+    border-radius: var(--radius-pill);
+    border: 0; padding: 0; display: grid; place-items: center;
+    background: var(--sk-paddlenav-background);
+    color: var(--sk-paddlenav-arrow-color);
+    /* hover feedback is the fastest thing on the page: 100ms, linear */
+    transition: background 100ms linear, color 100ms linear, opacity 100ms linear;
+  }
+  .paddlenav-arrow svg { width: 20px; height: 20px; fill: currentColor; }
+  .paddlenav-arrow:hover { background: var(--sk-paddlenav-background-hover);
+                           color: var(--sk-paddlenav-arrow-color-hover); }
+  .paddlenav-arrow:disabled { pointer-events: none; opacity: 0.42; }
+  .paddlenav-prev { left: 20px; }
+  .paddlenav-next { right: 20px; }
+  /* Invisible until the gallery is hovered — OR until the arrow takes keyboard
+     focus. Without that second selector the component is unusable from the
+     keyboard and identical in a screenshot. */
+  .with-paddlenav-onhover .paddlenav-arrow { opacity: 0; }
+  .with-paddlenav-onhover:hover .paddlenav-arrow:not(:disabled),
+  .with-paddlenav-onhover .paddlenav-arrow:focus-visible { opacity: 1; }
+
+  .dotnav {
+    --sk-dotnav-size: 8px;
+    --sk-dotnav-margin: 8px;
+    --sk-dotnav-scale: 1;
+    --sk-dotnav-scale-2: 0.75;
+    --sk-dotnav-scale-3: 0.5;
+    --sk-dotnav-hover-duration: 100ms;
+    --sk-dotnav-change-duration: 320ms;
+    --sk-dotnav-background:         rgba(247, 243, 236, 0.36);
+    --sk-dotnav-background-hover:   rgba(247, 243, 236, 0.48);
+    --sk-dotnav-background-current: rgba(247, 243, 236, 0.80);
+    position: absolute; left: 50%; translate: -50% 0; bottom: 24px;
+    display: flex; align-items: center; justify-content: center;
+    list-style: none; margin: 0; padding: 0; z-index: 1;
+  }
+  .dotnav-link {
+    display: block; border: 0; background: none; position: relative;
+    width: var(--sk-dotnav-size); height: var(--sk-dotnav-size);
+    /* the dot is 8px; the target around it is 24x24, and it costs no layout */
+    padding: var(--sk-dotnav-margin); box-sizing: content-box;
+    transition: width var(--sk-dotnav-hover-duration) linear,
+                height var(--sk-dotnav-hover-duration) linear,
+                padding var(--sk-dotnav-change-duration) ease-in-out;
+  }
+  .dotnav-link::before {
+    content: ""; position: absolute; border-radius: var(--radius-pill);
+    top: calc(50% - var(--sk-dotnav-size) / 2);
+    left: calc(50% - var(--sk-dotnav-size) / 2);
+    width: var(--sk-dotnav-size); height: var(--sk-dotnav-size);
+    scale: var(--sk-dotnav-scale);
+    background: var(--sk-dotnav-background);
+    transition: background-color var(--sk-dotnav-hover-duration) linear,
+                scale var(--sk-dotnav-change-duration) ease-in-out;
+  }
+  .dotnav-link:hover::before { background: var(--sk-dotnav-background-hover); }
+  /* overflow tapers instead of paginating: 1 -> 0.75 -> 0.5 -> gone */
+  .dotnav-truncate-2 { --sk-dotnav-scale: var(--sk-dotnav-scale-2); }
+  .dotnav-truncate-3 { --sk-dotnav-scale: var(--sk-dotnav-scale-3); }
+  .dotnav-truncate-hidden { --sk-dotnav-scale: var(--sk-dotnav-scale-3);
+                            --sk-dotnav-size: 0; --sk-dotnav-margin: 0; }
+  /* the dot you are already on is not clickable */
+  .dotnav-item.current .dotnav-link { cursor: default; pointer-events: none; }
+  .dotnav-item.current .dotnav-link::before { background: var(--sk-dotnav-background-current); }
+  /* a position change the user did not ask for must not animate */
+  .dotnav-stop-transitions .dotnav-link,
+  .dotnav-stop-transitions .dotnav-link::before { transition: none !important; }
+
+  /* 40ms between neighbours, so the row reads as one object with mass.
+     --d is the distance from the dot that is current, set in JS, so the
+     stagger radiates out from the thing that moved instead of being a fixed
+     lag on the last dot in the list. */
+  .dotnav-link::before { transition-delay: calc(var(--d, 0) * 40ms); }
+  .dotnav-link:hover::before { transition-delay: 0ms; }
+
+  .row-eyebrow { color: var(--accent); }
+  /* two columns of prose, which is a different thing from two cards: no
+     background, no border, no padding box. The rule between them is the only
+     ornament, and it is a hairline. */
+  .notes { display: grid; grid-template-columns: 1fr 1fr; gap: 0 clamp(32px, 5vw, 80px);
+           margin-top: 2em; text-align: left; }
+  .notes > div + div { border-left: 1px solid rgb(247 243 236 / 0.10);
+                       padding-left: clamp(32px, 5vw, 80px); }
+  .notes .t-label { margin-top: 1.6em; }
+  .notes > div > .t-label:first-child { margin-top: 0; }
+  @media (max-width: 734px) {
+    .notes { grid-template-columns: 1fr; }
+    .notes > div + div { border-left: 0; padding-left: 0; }
+  }
+  .credits { list-style: none; margin: 0.8em auto 0; padding: 0; max-width: 62ch; text-align: left; }
+  .credits li { margin-top: 0.4em; }
+  .credits a { color: var(--ink-secondary); }
+  .credits a:hover { color: var(--ink); }
 </style>
 </head>
 <body>
 <main>
+  <!-- loud: the subject fills the screen and bleeds off two edges -->
+  <section class="hero">
+    <div class="bed">
+      <!-- Art direction, not resolution switching: the phone gets a taller
+           crop of the same frame rather than the wide one letterboxed. -->
+      <picture>
+        <source media="(max-width: 734px)" srcset="media/hero-1000.webp" width="1000" height="1250">
+        <source srcset="media/hero-1600.webp 1600w, media/hero-2400.webp 2400w" sizes="100vw">
+        <img src="media/hero-2400.webp" width="2400" height="1350"
+             fetchpriority="high" decoding="async"
+             alt="The lava lake inside Halemaʻumaʻu crater at night. A dark crust floats on the surface, split into plates by bright orange seams, with steam lit from below drifting off to the right.">
+      </picture>
+    </div>
+    <div class="section-content">
+      <!-- no data-reveal in the hero: it is the first thing on the screen, so
+           there is nothing for it to be revealed from, and the reveal left the
+           CTA invisible until the first scroll -->
+      <div class="hero-top">
+        <p class="t-eyebrow-super">Kīlauea</p>
+        <h1 class="t-headline-super">The ground opens.</h1>
+      </div>
+      <div class="hero-foot">
+        <p class="t-intro">A summit the U.S. Geological Survey has photographed for more than a century.</p>
+        <div class="cta-row">
+          <a class="button" href="#record">See the record</a>
+          <a class="button button--secondary" href="#credits">Credits</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- quiet: one idea on a bare surface. A rest only reads as a rest if
+       something came before it. -->
   <section class="section">
     <div class="section-content">
-      <p class="t-eyebrow-super" data-reveal>Northwind&nbsp;Vessel</p>
-      <h1 class="t-headline-elevated" data-reveal>Built to hold heat.</h1>
-      <p class="t-intro" data-reveal>Eighteen hours hot. Twenty-four cold. One wall of vacuum between them.</p>
-      <div class="cta-row" data-reveal>
-        <a class="button" href="#">Learn more</a>
-        <a class="button button--secondary" href="#">Buy</a>
-      </div>
+      <p class="t-intro" data-reveal>The crust on a lava lake breaks along the same lines every time it cools.</p>
     </div>
   </section>
 
-  <section class="section section--alt">
+  <!-- loud: full-bleed, past the gutters, so it is the subject and not an asset -->
+  <figure class="band" style="margin: 0">
+    <img src="media/band-2400.webp" width="2400" height="900" loading="lazy" decoding="async"
+         alt="An aerial view of a lava flow spreading across black ground, the channel braiding into dozens of bright orange threads.">
+    <div class="band-head">
+      <h2 class="t-headline-elevated" data-reveal>A river finds its grade.</h2>
+    </div>
+    <figcaption>
+      <span class="t-label">Mauna Loa, 30 November 2022.</span>
+      <span class="t-caption">The first eruption there in thirty-eight years.</span>
+    </figcaption>
+  </figure>
+
+  <section class="section" id="record" style="padding-bottom: 0">
     <div class="section-content">
-      <h2 class="t-headline" data-reveal>Every part earns its place.</h2>
-      <div class="feature-grid">
-        <div class="feature-card stagger-item" data-reveal>
-          <div class="card-media"></div>
-          <h3 class="t-label">Vacuum wall</h3>
-          <p class="t-body">Two steel shells, nothing between them. Heat has no path out.</p>
-        </div>
-        <div class="feature-card stagger-item" data-reveal>
-          <div class="card-media"></div>
-          <h3 class="t-label">One-turn cap</h3>
-          <p class="t-body">Sealed in a single motion. Opens the same way, cold hands or not.</p>
-        </div>
-        <div class="feature-card stagger-item" data-reveal>
-          <div class="card-media"></div>
-          <h3 class="t-label">Steel, all through</h3>
-          <p class="t-body">No liner, no coating, no lining to flake. Just one material.</p>
-        </div>
-      </div>
+      <h2 class="t-headline" data-reveal>Three places, one volcano.</h2>
     </div>
   </section>
 
+  <!-- Each row is one subject at full height, the picture bleeding off the
+       outer edge. The side alternates so the eye crosses the page. -->
+  <section class="row">
+    <div class="row-copy">
+      <p class="t-body row-eyebrow" data-reveal>The summit</p>
+      <h3 class="t-headline" data-reveal>It refills from below.</h3>
+      <p class="t-body" data-reveal>A fountain inside Halema&#x02BB;uma&#x02BB;u, January 2021. The lake sits on top of a conduit, and the conduit is not a fixed thing &mdash; it opens, and the lake rises until it is lapping at the crater wall; it closes, and the whole surface drains away in hours.</p>
+      <p class="t-body" data-reveal>That is why the summit is the instrument. Tiltmeters on the caldera rim read the ground swelling and settling as magma moves beneath it, days before anything reaches the surface.</p>
+    </div>
+    <div class="row-media">
+      <img src="media/card-summit.webp" width="1200" height="1560" loading="lazy" decoding="async"
+           alt="A lava fountain erupting from a vent inside a crater, throwing molten rock upward in a wide spray surrounded by dark cooled lava.">
+    </div>
+  </section>
+
+  <section class="row row--flip">
+    <div class="row-copy">
+      <p class="t-body row-eyebrow" data-reveal>The rift</p>
+      <h3 class="t-headline" data-reveal>It opened and stayed open.</h3>
+      <p class="t-body" data-reveal>Fissure 8, June 2018. Twenty-four cracks opened across the lower East Rift Zone that summer. One of them kept going, built its own cone, and fed a channel to the sea for three months.</p>
+      <p class="t-body" data-reveal>While it ran, the summit lava lake drained and the caldera floor collapsed in stages &mdash; the same magma, leaving by a different door, forty kilometres away.</p>
+    </div>
+    <div class="row-media">
+      <img src="media/card-rift.webp" width="1200" height="1560" loading="lazy" decoding="async"
+           alt="A cinder cone at night with a river of lava running away from it down a dark slope, the sky deep blue above.">
+    </div>
+  </section>
+
+  <section class="row">
+    <div class="row-copy">
+      <p class="t-body row-eyebrow" data-reveal>The sample</p>
+      <h3 class="t-headline" data-reveal>Pulled by hand.</h3>
+      <p class="t-body" data-reveal>Molten rock drawn out on a steel rod and dropped straight into water. The quench freezes the chemistry at the instant it left the flow, before the crystals have time to grow and rewrite it.</p>
+      <p class="t-body" data-reveal>Read in a lab the same week, it says how hot the magma was and how far it had travelled. No instrument on the rim can answer that. Someone has to walk out and take it.</p>
+    </div>
+    <div class="row-media">
+      <img src="media/card-sample.webp" width="1200" height="1560" loading="lazy" decoding="async"
+           alt="A geologist in a helmet and gloves leaning over a field of cooled lava, drawing a sample of molten rock with a steel rod into a small cup.">
+    </div>
+  </section>
+
+  <!-- loud: the scroll-linked section, pinned for two and a half screens -->
   <section class="section-pinned">
     <div class="sticky-container">
       <div class="sticky-content">
         <div class="section-content">
-          <div class="vessel" data-decorative></div>
-          <h2 class="t-headline" style="margin-top: var(--headline-plus-first)">One wall. Two temperatures.</h2>
-          <p class="t-body-reduced">Scroll.</p>
+          <div class="pinned-media">
+            <img src="media/pinned-1800.webp" width="1800" height="1012" loading="lazy" decoding="async"
+                 alt="A wide view across a crater floor with several small lava fountains along a line, each one feeding a tall white steam plume that leans with the wind.">
+          </div>
+          <div class="pinned-copy" style="margin-top: var(--headline-plus-first)">
+            <div class="step-1">
+              <h2 class="t-headline">Steam is the tell.</h2>
+              <p class="t-body-reduced">Scroll.</p>
+            </div>
+            <div class="step-2">
+              <h2 class="t-headline">The ground is still open.</h2>
+              <p class="t-body-reduced">Every plume is a crack that has not closed.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="section section--dark">
-    <div class="section-content">
-      <h2 class="t-headline" data-reveal>Cold for a day.</h2>
-      <p class="t-intro" data-reveal>Fill it at dawn. It will still be cold when you get back.</p>
+  <!-- loud: four subjects, one per slide, with the measured dot and paddle navs -->
+  <section class="gallery with-paddlenav-onhover" aria-roledescription="carousel"
+           aria-label="Four ways lava arrives">
+    <ul class="gallery-track" role="list">
+      <li class="gallery-slide is-current" aria-label="1 of 4: Dome fountain">
+        <img src="media/slide-fountain.webp" width="1400" height="933" loading="lazy" decoding="async"
+             alt="A rounded dome of molten lava standing above the ground like a blister, dark crust cracking across its surface, against a pale sky.">
+        <span class="slide-label"><span class="t-label">Dome fountain</span><span class="t-caption">Mauna Ulu, 1969</span></span>
+      </li>
+      <li class="gallery-slide" aria-label="2 of 4: Curtain of fire">
+        <img src="media/slide-curtain.webp" width="1400" height="933" loading="lazy" decoding="async"
+             alt="A broad arc of bright red lava thrown up from a fissure, spraying sideways over a field of grey cooled rock.">
+        <span class="slide-label"><span class="t-label">Curtain of fire</span><span class="t-caption">A fissure opening along its whole length</span></span>
+      </li>
+      <li class="gallery-slide" aria-label="3 of 4: Ocean entry">
+        <img src="media/slide-sea.webp" width="1400" height="933" loading="lazy" decoding="async"
+             alt="Seen from the air, a white steam plume rises where a lava flow reaches the sea, cutting a line between grey water and burnt ground.">
+        <span class="slide-label"><span class="t-label">Ocean entry</span><span class="t-caption">Where the flow runs out of island</span></span>
+      </li>
+      <li class="gallery-slide" aria-label="4 of 4: The vent">
+        <img src="media/slide-vent.webp" width="1400" height="933" loading="lazy" decoding="async"
+             alt="Looking down into a steep cone of grey ash, with a bright orange throat of molten lava at its centre spilling into a narrow channel.">
+        <span class="slide-label"><span class="t-label">The vent</span><span class="t-caption">Halemaʻumaʻu, January 2021</span></span>
+      </li>
+    </ul>
+    <ul class="dotnav" role="list">
+      <li class="dotnav-item current"><button class="dotnav-link" type="button" aria-label="Show Dome fountain" aria-current="true"></button></li>
+      <li class="dotnav-item"><button class="dotnav-link" type="button" aria-label="Show Curtain of fire"></button></li>
+      <li class="dotnav-item"><button class="dotnav-link" type="button" aria-label="Show Ocean entry"></button></li>
+      <li class="dotnav-item"><button class="dotnav-link" type="button" aria-label="Show The vent"></button></li>
+    </ul>
+    <div class="paddlenav">
+      <button class="paddlenav-arrow paddlenav-prev" type="button" aria-label="Previous" disabled><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M13.3 2.3 5.6 10l7.7 7.7 1.4-1.4L8.4 10l6.3-6.3z"/></svg></button>
+      <button class="paddlenav-arrow paddlenav-next" type="button" aria-label="Next"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.7 2.3 5.3 3.7 11.6 10l-6.3 6.3 1.4 1.4L14.4 10z"/></svg></button>
     </div>
   </section>
 
-  <section class="section">
+  <!-- quiet, by inversion: the one light section on the page. 64px of type on a
+       bare surface is a legitimate composition BECAUSE it sits between two
+       pictures. A page made only of this is the blank canvas again. -->
+  <section class="section section--dark">
     <div class="section-content">
-      <p class="t-body-reduced" data-reveal>Tested to 18&nbsp;hours hot and 24&nbsp;hours cold at 20&nbsp;°C ambient, lid closed.</p>
-      <p class="t-caption">Figures from internal testing. Real-world performance varies with fill volume, ambient temperature and how often the vessel is opened.</p>
+      <h2 class="t-headline-elevated" data-reveal>Nothing here was drawn.</h2>
+      <p class="t-intro" data-reveal>Every frame has a date, a place, and the name of whoever was standing there.</p>
+    </div>
+  </section>
+
+  <!-- quiet: the page's longest read. Apple's pages carry a block like this
+       before the footer — plain prose in two columns, no tiles, no icons. It
+       is what keeps a page of photographs from being a gallery. -->
+  <section class="section" id="notes">
+    <div class="section-content">
+      <h2 class="t-headline" data-reveal>Field notes.</h2>
+      <div class="notes" data-reveal>
+        <div>
+          <h3 class="t-label">Two names for the same rock</h3>
+          <p class="t-body">P&#x101;hoehoe runs smooth and skins over into rope. &#x02BB;A&#x02BB;&#x101; tears itself into loose clinker that crunches underfoot and shreds boots. They are the same melt; the difference is how fast it was moving and how much gas it had left when it cooled.</p>
+          <h3 class="t-label">Why the steam matters</h3>
+          <p class="t-body">A plume is not the eruption. It is groundwater meeting something still hot enough to boil it, which means the crack it is rising through has not closed. Mapping plumes maps the part of the system that is still open.</p>
+        </div>
+        <div>
+          <h3 class="t-label">A century on the rim</h3>
+          <p class="t-body">The Hawaiian Volcano Observatory has sat on the edge of this caldera since 1912. Its archive is the reason a page like this can exist at all: more than a hundred years of photographs taken as part of the job, placed in the public domain the day they were filed.</p>
+          <h3 class="t-label">What the record is for</h3>
+          <p class="t-body">Eruptions are compared against their predecessors. A frame from 1959 and a frame from 2018 are evidence in the same argument, which is why each one carries a date, a place and a name, and why none of them has been improved.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="credits">
+    <div class="section-content">
+      <p class="t-body-reduced" data-reveal>Photographs by the U.S. Geological Survey, the National Park Service and the Hawaiian Volcano Observatory. All public domain.</p>
+      <ul class="credits t-caption">
+        <li>Hero, carousel 4 — <a href="https://commons.wikimedia.org/wiki/File:Kilauea_Lava_Lake_(12792432484).jpg">Kīlauea lava lake</a> and <a href="https://commons.wikimedia.org/wiki/File:Fountaining_at_a_fissure_within_Halema%CA%BBuma%CA%BBu_crater,_January_2021.jpg">Halemaʻumaʻu fissure</a>, USGS.</li>
+        <li>Band — <a href="https://commons.wikimedia.org/wiki/File:November_30,_2022_%E2%80%94_Mauna_Loa_Lava_Flow_(111218).jpg">Mauna Loa lava flow</a>, USGS Hawaiian Volcano Observatory.</li>
+        <li>Cards — <a href="https://commons.wikimedia.org/wiki/File:Lava_fountain_from_K%C4%ABlauea%27s_ongoing_summit_eruption_(96758).jpg">summit fountain</a>, <a href="https://commons.wikimedia.org/wiki/File:Kilauea_Fissure_8_cone_erupting_on_6-28-2018.jpg">fissure 8</a>, <a href="https://commons.wikimedia.org/wiki/File:Lava_Sampling_(16368518133).jpg">lava sampling</a>, USGS.</li>
+        <li>Pinned, carousel 1–3 — <a href="https://commons.wikimedia.org/wiki/File:Eruption_at_the_summit_of_Kilauea_volcano_(118574).jpeg">summit eruption</a>, <a href="https://commons.wikimedia.org/wiki/File:Lava_fountain_dome_2.jpg">dome fountain</a>, <a href="https://commons.wikimedia.org/wiki/File:Pahoeoe_fountain_edit2.jpg">pāhoehoe fountain</a>, <a href="https://commons.wikimedia.org/wiki/File:USGS_K%C4%ABlauea_multimediaFile-2066.jpg">ocean entry</a>, USGS.</li>
+      </ul>
+      <p class="t-caption" style="max-width: 62ch; margin-inline: auto">Dates and places are those recorded with each photograph. This page is a design example: it carries no Apple font, image, icon or wordmark, and the type scale, rhythm and motion are the measured system described in the skill.</p>
     </div>
   </section>
 </main>
@@ -141,21 +517,111 @@
     for (const el of items) io.observe(el);
   }
 
-  // Scroll progress through the pinned section, written once per frame.
+  // Scroll progress through the pinned section. Two values are written per
+  // frame; CSS does the rest. The move is one slow push into the photograph
+  // with the copy stepping once at the midpoint — motion should only ever say
+  // the sentence the section is already making.
   const pinned = document.querySelector(".section-pinned");
-  const vessel = document.querySelector(".vessel");
-  if (pinned && vessel && document.documentElement.classList.contains("enhance-xp")) {
+  if (pinned && document.documentElement.classList.contains("enhance-xp")) {
     let ticking = false;
+    const frame = () => {
+      const r = pinned.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, -r.top / (r.height - innerHeight)));
+      // the copy swap holds at each end, so the change happens in the middle
+      // of the scroll instead of easing the whole way through. The two ramps
+      // do not overlap: the first line is fully out by 0.44 and the second
+      // does not start until 0.52.
+      const ramp = (a, b) => Math.min(1, Math.max(0, (p - a) / (b - a)));
+      pinned.style.setProperty("--p", p.toFixed(4));
+      pinned.style.setProperty("--t1", (1 - ramp(0.32, 0.44)).toFixed(4));
+      pinned.style.setProperty("--t2", ramp(0.52, 0.64).toFixed(4));
+      ticking = false;
+    };
     addEventListener("scroll", () => {
       if (ticking) return;
       ticking = true;
-      requestAnimationFrame(() => {
-        const r = pinned.getBoundingClientRect();
-        const p = Math.min(1, Math.max(0, -r.top / (r.height - innerHeight)));
-        vessel.style.transform = `rotate(${p * 24}deg) scale(${1 + p * 0.12})`;
-        ticking = false;
-      });
+      requestAnimationFrame(frame);
     }, { passive: true });
+    frame();
+  }
+
+  // --- the gallery -------------------------------------------------------
+  // The JS only moves the scroller and swaps classes. Every value that
+  // animates lives in CSS, which is what keeps the dots cheap and the motion
+  // consistent. See references/micro.md.
+  const gal = document.querySelector(".gallery");
+  if (gal) {
+    const track = gal.querySelector(".gallery-track");
+    const slides = [...gal.querySelectorAll(".gallery-slide")];
+    const dots = [...gal.querySelectorAll(".dotnav-item")];
+    const dotnav = gal.querySelector(".dotnav");
+    const prev = gal.querySelector(".paddlenav-prev");
+    const next = gal.querySelector(".paddlenav-next");
+    let index = 0;
+    // A smooth scrollTo across several slides drags every slide in between
+    // through the observer, and the dots jitter through the positions on the
+    // way. While a move we started is in flight, the observer is ignored.
+    let settling = false;
+    let settleTimer = 0;
+
+    const paint = (userDriven) => {
+      if (!userDriven) dotnav.classList.add("dotnav-stop-transitions");
+      dots.forEach((dot, i) => {
+        const d = Math.abs(i - index);
+        dot.classList.remove("dotnav-truncate-2", "dotnav-truncate-3", "dotnav-truncate-hidden");
+        if (d === 2) dot.classList.add("dotnav-truncate-2");
+        else if (d === 3) dot.classList.add("dotnav-truncate-3");
+        else if (d > 3) dot.classList.add("dotnav-truncate-hidden");
+        dot.classList.toggle("current", i === index);
+        // the stagger radiates from the dot that moved
+        dot.querySelector(".dotnav-link").style.setProperty("--d", Math.min(d, 4));
+        const btn = dot.querySelector(".dotnav-link");
+        if (i === index) btn.setAttribute("aria-current", "true");
+        else btn.removeAttribute("aria-current");
+      });
+      slides.forEach((s, i) => s.classList.toggle("is-current", i === index));
+      prev.disabled = index === 0;
+      next.disabled = index === slides.length - 1;
+      if (!userDriven) requestAnimationFrame(() => dotnav.classList.remove("dotnav-stop-transitions"));
+    };
+
+    const settle = () => {
+      clearTimeout(settleTimer);
+      settling = true;
+      settleTimer = setTimeout(() => { settling = false; }, 700);
+    };
+    const goto = (i) => {
+      index = Math.max(0, Math.min(slides.length - 1, i));
+      settle();
+      track.scrollTo({ left: slides[index].offsetLeft, behavior: reduced ? "auto" : "smooth" });
+      paint(true);
+    };
+    prev.addEventListener("click", () => goto(index - 1));
+    next.addEventListener("click", () => goto(index + 1));
+    dots.forEach((dot, i) => dot.querySelector(".dotnav-link")
+      .addEventListener("click", () => goto(i)));
+    // arrow keys, because a gallery that only answers to a mouse is half a
+    // component
+    gal.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") { goto(index + 1); e.preventDefault(); }
+      if (e.key === "ArrowLeft")  { goto(index - 1); e.preventDefault(); }
+    });
+    track.addEventListener("scrollend", () => { settling = false; });
+
+    // A swipe changes the position without the dots being touched, and that
+    // must not animate: the animation means "you moved this".
+    const seen = new IntersectionObserver((entries) => {
+      if (settling) return;
+      for (const e of entries) {
+        if (e.intersectionRatio < 0.6) continue;
+        const i = slides.indexOf(e.target);
+        if (i === index) continue;
+        index = i;
+        paint(false);
+      }
+    }, { root: track, threshold: [0.6] });
+    for (const s of slides) seen.observe(s);
+    paint(false);
   }
 </script>
 </body>
