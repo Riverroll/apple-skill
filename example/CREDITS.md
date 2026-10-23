@@ -50,6 +50,31 @@ work, so the result carries no new restriction. It is also the honest fallback
 move on a good still beats a static tile, and it beats a watermarked preview
 outright.
 
+## The clips in `tilt/`, `network/` and `alert/`
+
+These three are not photography and not footage: they are **the interface
+itself**, rendered frame by frame. `example/scenes/tilt.html`,
+`network.html` and `alert.html` each expose one function, `setFrame(t)`, and
+`tools/render-clip.mjs` drives a headless browser through 90 values of `t`,
+captures each paint, and encodes the result into the same six-file ladder
+`references/media.md` measured off apple.com.
+
+Nothing in them is traced, sampled or generated from somebody else's work. The
+numbers are invented, the product is invented, and the typefaces are the
+system stack the page already uses.
+
+| file | pixels | source | licence |
+|---|---|---|---|
+| `tilt/*.mp4` | the six measured sizes | `example/scenes/tilt.html` | MIT, with the rest of this repo |
+| `network/*.mp4` | the same six | `example/scenes/network.html` | MIT |
+| `alert/*.mp4` | the same six | `example/scenes/alert.html` | MIT |
+| `start-small.webp`, `start-medium.webp`, `start-large.webp` in each | frame 0 of each crop | exported from the encoded file | MIT |
+
+They weigh 18&ndash;50 KB at 1&times;, against 260 KB for the photographic
+clips — the bits-per-pixel table in `references/media.md` predicts exactly
+that: a flat graphic on a dark ground is the cheap end of the scale, and
+textured aerial footage is the expensive end, 58&times; apart.
+
 ## Why these and not stock photography
 
 `references/imagery.md` records what was actually reachable when this page was

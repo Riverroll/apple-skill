@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ridge — alert arriving</title>
+<link rel="stylesheet" href="scene.css">
+<style>
+  body { align-content: center; justify-items: center; padding: 5%; }
+  .stack { width: min(92%, 520px); }
+  .list { display: grid; gap: 10px; }
+  .card {
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+    gap: 14px; padding: 16px 18px; border-radius: 16px;
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  }
+  .card .dot { width: 8px; height: 8px; border-radius: 980px;
+               background: color-mix(in srgb, var(--ink) 28%, transparent); }
+  .card.hot { background: color-mix(in srgb, var(--accent) 12%, transparent);
+              border-color: color-mix(in srgb, var(--accent) 38%, transparent); }
+  .card.hot .dot { background: var(--accent); }
+  .title, .sub { display: block; }
+  .title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .sub   { font-size: 12px; color: var(--ink-secondary); margin-top: 3px; }
+  .time  { font-size: 12px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .sent  { margin-top: 14px; font-size: 12px; color: var(--ink-secondary); text-align: center; }
+  .pulse { position: absolute; width: 8px; height: 8px; border-radius: 980px;
+           border: 1px solid var(--accent); }
+  .slot  { position: relative; }
+  @media (max-aspect-ratio: 1/1) {
+    .stack { width: 100%; }
+    .card { padding: 14px; gap: 10px; }
+    .title { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stack">
+    <div class="label" style="margin-bottom: 14px">Alerts &middot; Kīlauea summit</div>
+    <div class="list" id="list">
+      <div class="slot" id="slot">
+        <div class="card hot" id="new">
+          <span class="dot"></span>
+          <span><span class="title">Inflation rate above threshold</span>
+                <span class="sub">Uwēkahuna &middot; +2.41 &micro;rad in 40 min</span></span>
+          <span class="time">06:41</span>
+        </div>
+        <span class="pulse" id="pulse"></span>
+      </div>
+      <div class="card"><span class="dot"></span>
+        <span><span class="title">Tremor steady</span>
+              <span class="sub">Band 0.5–5 Hz &middot; no change</span></span>
+        <span class="time">06:00</span></div>
+      <div class="card"><span class="dot"></span>
+        <span><span class="title">All stations reporting</span>
+              <span class="sub">14 of 14 &middot; last gap 9 days ago</span></span>
+        <span class="time">05:30</span></div>
+    </div>
+    <div class="sent" id="sent">Sent to 4 recipients &middot; 19 minutes before the vent opened</div>
+  </div>
+
+<script>
+const slot = document.getElementById("slot"), card = document.getElementById("new");
+const pulse = document.getElementById("pulse"), sent = document.getElementById("sent");
+const clamp01 = (x) => Math.min(1, Math.max(0, x));
+const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+
+const stack = document.querySelector(".stack");
+let h = 0;
+function layout() {
+  h = card.offsetHeight + 10;               // card plus the grid gap
+  // Reserve the open height up front. Without this the whole block is
+  // re-centred on every frame as the row opens, so the clip reads as the page
+  // jittering rather than one row making room.
+  stack.style.minHeight = "";
+  stack.style.minHeight = (stack.offsetHeight + h) + "px";
+  const d = card.querySelector(".dot").getBoundingClientRect();
+  const s = slot.getBoundingClientRect();
+  pulse.style.left = (d.left - s.left) + "px";
+  pulse.style.top  = (d.top  - s.top)  + "px";
+}
+
+// The alert does not slide in from off-frame: the row opens and the card
+// settles into the space it made. A card flying in from the edge is a toy;
+// the list making room is the interface telling you something arrived.
+window.setFrame = function (t) {
+  const open = easeOut(clamp01((t - 0.12) / 0.38));
+  slot.style.height = (h * open - 10 * open) + "px";
+  slot.style.marginBottom = open < 1 ? "0px" : "";
+  card.style.opacity = clamp01((open - 0.25) / 0.5).toFixed(3);
+  card.style.transform = `translateY(${(-8 * (1 - open)).toFixed(2)}px)`;
+
+  // one ring, once, on the thing that changed — not a loop of pulses
+  const p = clamp01((t - 0.52) / 0.3);
+  pulse.style.opacity = (0.9 * (1 - p)).toFixed(3);
+  pulse.style.transform = `scale(${(1 + p * 4.5).toFixed(3)})`;
+
+  sent.style.opacity = clamp01((t - 0.72) / 0.2).toFixed(3);
+};
+
+layout();
+slot.style.overflow = "hidden";
+addEventListener("resize", () => { layout(); window.setFrame(0); });
+window.setFrame(0);
+</script>
+</body>
+</html>

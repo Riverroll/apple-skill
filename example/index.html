@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kīlauea — a page built on the record</title>
+<title>Ridge — know before it moves</title>
 <link rel="stylesheet" href="../skills/apple-design/assets/apple-base.css">
 <link rel="preload" as="image" href="media/hero-2400.webp"
       imagesrcset="media/hero-1600.webp 1600w, media/hero-2400.webp 2400w"
@@ -15,6 +15,18 @@
      every relationship the system asks for still holds: three separated ink
      steps, an alt surface that is a near neighbour of the base, one accent
      readable on both.
+
+     It is a marketing page, which is the shape the skill is written for: a
+     hero with one subject, bands of moving media, feature rows that alternate
+     sides, a pinned section, a carousel, a spec block and a close. Ridge, the
+     product it sells, is invented — no real company, instrument or price is
+     described.
+
+     Four of the media here are clips, and three of those were not filmed:
+     example/scenes/*.html are rendered frame by frame by tools/render-clip.mjs
+     into the same six-file ladder apple.com ships. A product page has to be
+     able to show the product moving, and 'we have no footage' is not a reason
+     to ship a page of stills.
 
      The photographs are public domain, from the U.S. Geological Survey and the
      National Park Service. See CREDITS.md. They are here because a page with
@@ -284,11 +296,64 @@
   .credits li { margin-top: 0.4em; }
   .credits a { color: var(--ink-secondary); }
   .credits a:hover { color: var(--ink); }
+
+  /* A clip of the interface is already full of type, so its caption goes
+     BELOW it on the surface rather than on top of it — text over type is not
+     the same problem as text over a photograph, it is a worse one.
+     references/composition.md. */
+  .band--ui { height: auto; background: var(--surface);
+              padding: 64px var(--gutter) 72px; }
+  .band--ui::after { display: none; }
+  /* The frame's aspect follows the SOURCE ladder, not the layout breakpoints:
+     the clip is re-cropped at 570 and 780, so the box it sits in has to change
+     at 570 and 780 too. Anything else crops a crop. references/media.md. */
+  .band--ui .media-stack {
+    height: auto; aspect-ratio: 420 / 480; --media-bed: var(--surface-alt);
+    max-width: var(--content-width); margin-inline: auto;
+    border-radius: var(--radius-card); overflow: hidden;
+  }
+  @media (min-width: 570px) { .band--ui .media-stack { aspect-ratio: 934 / 576; } }
+  @media (min-width: 780px) { .band--ui .media-stack { aspect-ratio: 1260 / 612; } }
+  .band figcaption.caption--surface {
+    position: static; max-width: none; margin: 1.6em auto 0;
+    text-align: center; text-shadow: none; padding-inline: var(--gutter);
+  }
+
+  /* Four numbers on the surface. No box, no border, no icon: the rule between
+     them is the only ornament, and it is a hairline — the same decision the
+     notes block makes. */
+  .feature-grid { display: grid; grid-template-columns: repeat(4, 1fr);
+                  margin-top: 2em; text-align: left; }
+  .feature-grid .stat { padding-inline: clamp(16px, 2.4vw, 32px); }
+  .feature-grid .stat:first-child { padding-left: 0; }
+  .feature-grid .stat + .stat { border-left: 1px solid rgb(247 243 236 / 0.10); }
+  .stat-n { font-variant-numeric: tabular-nums; margin: 0 0 0.3em; }
+  .stat .t-caption { color: var(--ink-secondary); max-width: 18ch; }
+  @media (max-width: 1068px) { .feature-grid { grid-template-columns: repeat(2, 1fr); row-gap: 2em; } 
+                               .feature-grid .stat:nth-child(odd) { padding-left: 0; border-left: 0; } }
+  @media (max-width: 734px)  { .feature-grid { grid-template-columns: 1fr; row-gap: 1.6em; }
+                               .feature-grid .stat { padding-inline: 0; border-left: 0; } }
+
+  /* The spec block: rows on a hairline, label left, value right. A table would
+     be the wrong element — there is one column of values, not a comparison. */
+  .specs { margin: 2em 0 0; text-align: left; }
+  .specs > div { display: grid; grid-template-columns: 12rem 1fr;
+                 gap: clamp(16px, 3vw, 48px); padding: 1.2em 0;
+                 border-top: 1px solid rgb(247 243 236 / 0.10); }
+  .specs > div:last-child { border-bottom: 1px solid rgb(247 243 236 / 0.10); }
+  /* The label is the smaller thing here: the value is what somebody came to
+     read. A spec row that shouts its own field name is a form, not a spec. */
+  .specs dt { color: var(--ink-muted); }
+  .specs dd { margin: 0; max-width: 56ch; }
+  @media (max-width: 734px) { .specs > div { grid-template-columns: 1fr; gap: 0.4em; } }
 </style>
 </head>
 <body>
 <main>
-  <!-- loud: the subject fills the screen and bleeds off two edges -->
+  <!-- loud: the subject fills the screen and bleeds off two edges. The hero is
+       a photograph, not a clip: it is the LCP element, and a still is the only
+       thing that can be decoded before a clip has finished arriving.
+       references/media.md. -->
   <section class="hero">
     <div class="bed">
       <!-- Art direction, not resolution switching: the phone gets a taller
@@ -306,14 +371,14 @@
            there is nothing for it to be revealed from, and the reveal left the
            CTA invisible until the first scroll -->
       <div class="hero-top">
-        <p class="t-eyebrow-super">Kīlauea</p>
-        <h1 class="t-headline-super">The ground opens.</h1>
+        <p class="t-eyebrow-super">Ridge</p>
+        <h1 class="t-headline-super">Know before it moves.</h1>
       </div>
       <div class="hero-foot">
-        <p class="t-intro">A summit the U.S. Geological Survey has photographed for more than a century.</p>
+        <p class="t-intro">Fourteen instruments on the mountain. One number on your screen.</p>
         <div class="cta-row">
-          <a class="button" href="#record">See the record</a>
-          <a class="button button--secondary" href="#credits">Credits</a>
+          <a class="button" href="#how">See how it works</a>
+          <a class="button button--secondary" href="#specs">Tech specs</a>
         </div>
       </div>
     </div>
@@ -321,19 +386,15 @@
 
   <!-- quiet: one idea on a bare surface. A rest only reads as a rest if
        something came before it. -->
-  <section class="section">
+  <section class="section" id="how">
     <div class="section-content">
-      <p class="t-intro" data-reveal>The crust on a lava lake breaks along the same lines every time it cools.</p>
+      <p class="t-intro" data-reveal>A volcano announces itself in millionths of a degree, hours before anything reaches the surface.</p>
     </div>
   </section>
 
-  <!-- loud: full-bleed, past the gutters, so it is the subject and not an asset -->
+  <!-- loud: full-bleed footage, past the gutters, so the subject is the page
+       rather than an item on it. -->
   <figure class="band" style="margin: 0">
-    <!-- The one clip on this page. Three seconds, silent, re-cropped per
-         breakpoint, with the photograph underneath it in the same grid cell —
-         references/media.md. Everything else here is a still, which is the
-         right ratio: a page carries a clip per two or three sections, not one
-         per section. -->
     <div class="media-stack" role="img"
          aria-label="An aerial view of a lava flow spreading across black ground, the braided channel drifting slowly past as the camera pushes in.">
       <video class="media-layer media-clip" preload="none" muted playsinline
@@ -346,7 +407,7 @@
       </picture>
     </div>
     <div class="band-head">
-      <h2 class="t-headline-elevated" data-reveal>A river finds its grade.</h2>
+      <h2 class="t-headline-elevated" data-reveal>It keeps its own time.</h2>
     </div>
     <figcaption>
       <span class="t-label">Mauna Loa, 30 November 2022.</span>
@@ -354,9 +415,53 @@
     </figcaption>
   </figure>
 
-  <section class="section" id="record" style="padding-bottom: 0">
+  <!-- The product's own claim, shown rather than asserted. This clip is not
+       footage: it is a scene rendered frame by frame from the interface
+       itself, by tools/render-clip.mjs. A product page that cannot show the
+       product moving is a brochure. -->
+  <figure class="band band--ui" style="margin: 0">
+    <div class="media-stack media-stack--ui" role="img"
+         aria-label="A tilt reading drawing itself across three seconds. The trace is flat for most of its length, then climbs steeply at the right as the reading passes two microradians, and a label settles on the final point.">
+      <video class="media-layer media-clip" preload="none" muted playsinline
+             data-basepath="media/tilt/" data-ladder="small,medium,large"></video>
+      <picture class="media-layer media-still">
+        <source media="(min-width: 780px)" srcset="media/tilt/start-large.webp">
+        <source media="(min-width: 570px)" srcset="media/tilt/start-medium.webp">
+        <img src="media/tilt/start-small.webp" width="420" height="480" alt=""
+             loading="lazy" decoding="async">
+      </picture>
+    </div>
+    <figcaption class="caption--surface">
+      <span class="t-label">Microradians. Live.</span>
+      <span class="t-caption">Tilt at Uwēkahuna, forty minutes before the vent opened.</span>
+    </figcaption>
+  </figure>
+
+  <!-- Four numbers on a bare surface, staggered in at the measured 0.15s.
+       Not three equal cards with icons: no box, no border, no tile — the
+       hairline between them is the only ornament. references/composition.md
+       lists the card grid as a tell. -->
+  <section class="section">
     <div class="section-content">
-      <h2 class="t-headline" data-reveal>Three places, one volcano.</h2>
+      <h2 class="t-headline" data-reveal>What it does.</h2>
+      <div class="feature-grid">
+        <div class="stat stagger-item" data-reveal>
+          <p class="t-headline stat-n">14</p>
+          <p class="t-caption">instruments, summit to coast</p>
+        </div>
+        <div class="stat stagger-item" data-reveal>
+          <p class="t-headline stat-n">1 s</p>
+          <p class="t-caption">from the ground to your screen</p>
+        </div>
+        <div class="stat stagger-item" data-reveal>
+          <p class="t-headline stat-n">19 min</p>
+          <p class="t-caption">median warning, last eleven events</p>
+        </div>
+        <div class="stat stagger-item" data-reveal>
+          <p class="t-headline stat-n">9 d</p>
+          <p class="t-caption">longest gap in four years of record</p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -364,10 +469,10 @@
        outer edge. The side alternates so the eye crosses the page. -->
   <section class="row">
     <div class="row-copy">
-      <p class="t-body row-eyebrow" data-reveal>The summit</p>
-      <h3 class="t-headline" data-reveal>It refills from below.</h3>
-      <p class="t-body" data-reveal>A fountain inside Halema&#x02BB;uma&#x02BB;u, January 2021. The lake sits on top of a conduit, and the conduit is not a fixed thing &mdash; it opens, and the lake rises until it is lapping at the crater wall; it closes, and the whole surface drains away in hours.</p>
-      <p class="t-body" data-reveal>That is why the summit is the instrument. Tiltmeters on the caldera rim read the ground swelling and settling as magma moves beneath it, days before anything reaches the surface.</p>
+      <p class="t-body row-eyebrow" data-reveal>The rim</p>
+      <h3 class="t-headline" data-reveal>Built for the edge.</h3>
+      <p class="t-body" data-reveal>A tiltmeter buried on the caldera rim reads the ground swelling as magma moves beneath it. The signal is a few microradians &mdash; a slope change you could not see if you were standing on it.</p>
+      <p class="t-body" data-reveal>Ridge sinks the sensor two metres into rock, below the layer that moves with the weather, and leaves nothing above ground but a mast.</p>
     </div>
     <div class="row-media">
       <img src="media/card-summit.webp" width="1200" height="1560" loading="lazy" decoding="async"
@@ -378,9 +483,9 @@
   <section class="row row--flip">
     <div class="row-copy">
       <p class="t-body row-eyebrow" data-reveal>The rift</p>
-      <h3 class="t-headline" data-reveal>It opened and stayed open.</h3>
-      <p class="t-body" data-reveal>Fissure 8, June 2018. Twenty-four cracks opened across the lower East Rift Zone that summer. One of them kept going, built its own cone, and fed a channel to the sea for three months.</p>
-      <p class="t-body" data-reveal>While it ran, the summit lava lake drained and the caldera floor collapsed in stages &mdash; the same magma, leaving by a different door, forty kilometres away.</p>
+      <h3 class="t-headline" data-reveal>It survives the ground opening.</h3>
+      <p class="t-body" data-reveal>In 2018 twenty-four fissures opened across the lower East Rift Zone in six weeks. Stations went down with the ground they were standing on.</p>
+      <p class="t-body" data-reveal>Every Ridge node carries its own power, its own clock and four days of storage, and routes to any two neighbours. Losing one station costs you one station.</p>
     </div>
     <div class="row-media">
       <img src="media/card-rift.webp" width="1200" height="1560" loading="lazy" decoding="async"
@@ -390,16 +495,34 @@
 
   <section class="row">
     <div class="row-copy">
-      <p class="t-body row-eyebrow" data-reveal>The sample</p>
-      <h3 class="t-headline" data-reveal>Pulled by hand.</h3>
-      <p class="t-body" data-reveal>Molten rock drawn out on a steel rod and dropped straight into water. The quench freezes the chemistry at the instant it left the flow, before the crystals have time to grow and rewrite it.</p>
-      <p class="t-body" data-reveal>Read in a lab the same week, it says how hot the magma was and how far it had travelled. No instrument on the rim can answer that. Someone has to walk out and take it.</p>
+      <p class="t-body row-eyebrow" data-reveal>The field</p>
+      <h3 class="t-headline" data-reveal>Serviceable in gloves.</h3>
+      <p class="t-body" data-reveal>Nobody services an instrument on a lava field in good conditions. One captive screw, one connector, one battery pack that comes out with a gloved hand and goes back in the wrong way round without breaking anything.</p>
+      <p class="t-body" data-reveal>The log of what was changed is written on the node and again at the summit, so a swap made at 4am is still a swap you can read in the record a year later.</p>
     </div>
     <div class="row-media">
       <img src="media/card-sample.webp" width="1200" height="1560" loading="lazy" decoding="async"
            alt="A geologist in a helmet and gloves leaning over a field of cooled lava, drawing a sample of molten rock with a steel rod into a small cup.">
     </div>
   </section>
+
+  <figure class="band band--ui" style="margin: 0">
+    <div class="media-stack media-stack--ui" role="img"
+         aria-label="A map of the network. A single contour expands outward from the summit, and each station it passes turns from grey to the accent colour as the count climbs from zero to fourteen.">
+      <video class="media-layer media-clip" preload="none" muted playsinline
+             data-basepath="media/network/" data-ladder="small,medium,large"></video>
+      <picture class="media-layer media-still">
+        <source media="(min-width: 780px)" srcset="media/network/start-large.webp">
+        <source media="(min-width: 570px)" srcset="media/network/start-medium.webp">
+        <img src="media/network/start-small.webp" width="420" height="480" alt=""
+             loading="lazy" decoding="async">
+      </picture>
+    </div>
+    <figcaption class="caption--surface">
+      <span class="t-label">Fourteen, all reporting.</span>
+      <span class="t-caption">Summit, rift and two coastal pairs, on one clock.</span>
+    </figcaption>
+  </figure>
 
   <!-- loud: the scroll-linked section, pinned for two and a half screens -->
   <section class="section-pinned">
@@ -416,8 +539,8 @@
               <p class="t-body-reduced">Scroll.</p>
             </div>
             <div class="step-2">
-              <h2 class="t-headline">The ground is still open.</h2>
-              <p class="t-body-reduced">Every plume is a crack that has not closed.</p>
+              <h2 class="t-headline">Ridge counts the plumes.</h2>
+              <p class="t-body-reduced">Every one is a crack that has not closed.</p>
             </div>
           </div>
         </div>
@@ -425,36 +548,54 @@
     </div>
   </section>
 
+  <figure class="band band--ui" style="margin: 0">
+    <div class="media-stack media-stack--ui" role="img"
+         aria-label="An alert list. The rows open to make room and a new alert settles into the space, its indicator ringing once, followed by a line saying it was sent to four recipients.">
+      <video class="media-layer media-clip" preload="none" muted playsinline
+             data-basepath="media/alert/" data-ladder="small,medium,large"></video>
+      <picture class="media-layer media-still">
+        <source media="(min-width: 780px)" srcset="media/alert/start-large.webp">
+        <source media="(min-width: 570px)" srcset="media/alert/start-medium.webp">
+        <img src="media/alert/start-small.webp" width="420" height="480" alt=""
+             loading="lazy" decoding="async">
+      </picture>
+    </div>
+    <figcaption class="caption--surface">
+      <span class="t-label">It tells you first.</span>
+      <span class="t-caption">A threshold crossing reaches a phone in about a second.</span>
+    </figcaption>
+  </figure>
+
   <!-- loud: four subjects, one per slide, with the measured dot and paddle navs -->
   <section class="gallery with-paddlenav-onhover" aria-roledescription="carousel"
-           aria-label="Four ways lava arrives">
+           aria-label="Four places Ridge is deployed">
     <ul class="gallery-track" role="list">
-      <li class="gallery-slide is-current" aria-label="1 of 4: Dome fountain">
+      <li class="gallery-slide is-current" aria-label="1 of 4: The summit pair">
         <img src="media/slide-fountain.webp" width="1400" height="933" loading="lazy" decoding="async"
              alt="A rounded dome of molten lava standing above the ground like a blister, dark crust cracking across its surface, against a pale sky.">
-        <span class="slide-label"><span class="t-label">Dome fountain</span><span class="t-caption">Mauna Ulu, 1969</span></span>
+        <span class="slide-label"><span class="t-label">The summit pair</span><span class="t-caption">Two nodes, nine hundred metres apart</span></span>
       </li>
-      <li class="gallery-slide" aria-label="2 of 4: Curtain of fire">
+      <li class="gallery-slide" aria-label="2 of 4: Along the fissure">
         <img src="media/slide-curtain.webp" width="1400" height="933" loading="lazy" decoding="async"
              alt="A broad arc of bright red lava thrown up from a fissure, spraying sideways over a field of grey cooled rock.">
-        <span class="slide-label"><span class="t-label">Curtain of fire</span><span class="t-caption">A fissure opening along its whole length</span></span>
+        <span class="slide-label"><span class="t-label">Along the fissure</span><span class="t-caption">Six nodes down the rift zone</span></span>
       </li>
-      <li class="gallery-slide" aria-label="3 of 4: Ocean entry">
+      <li class="gallery-slide" aria-label="3 of 4: The coast line">
         <img src="media/slide-sea.webp" width="1400" height="933" loading="lazy" decoding="async"
              alt="Seen from the air, a white steam plume rises where a lava flow reaches the sea, cutting a line between grey water and burnt ground.">
-        <span class="slide-label"><span class="t-label">Ocean entry</span><span class="t-caption">Where the flow runs out of island</span></span>
+        <span class="slide-label"><span class="t-label">The coast line</span><span class="t-caption">Where a flow runs out of island</span></span>
       </li>
-      <li class="gallery-slide" aria-label="4 of 4: The vent">
+      <li class="gallery-slide" aria-label="4 of 4: Inside the crater">
         <img src="media/slide-vent.webp" width="1400" height="933" loading="lazy" decoding="async"
              alt="Looking down into a steep cone of grey ash, with a bright orange throat of molten lava at its centre spilling into a narrow channel.">
-        <span class="slide-label"><span class="t-label">The vent</span><span class="t-caption">Halemaʻumaʻu, January 2021</span></span>
+        <span class="slide-label"><span class="t-label">Inside the crater</span><span class="t-caption">One node on the floor, replaced twice</span></span>
       </li>
     </ul>
     <ul class="dotnav" role="list">
-      <li class="dotnav-item current"><button class="dotnav-link" type="button" aria-label="Show Dome fountain" aria-current="true"></button></li>
-      <li class="dotnav-item"><button class="dotnav-link" type="button" aria-label="Show Curtain of fire"></button></li>
-      <li class="dotnav-item"><button class="dotnav-link" type="button" aria-label="Show Ocean entry"></button></li>
-      <li class="dotnav-item"><button class="dotnav-link" type="button" aria-label="Show The vent"></button></li>
+      <li class="dotnav-item current"><button class="dotnav-link" type="button" aria-label="Show The summit pair" aria-current="true"></button></li>
+      <li class="dotnav-item"><button class="dotnav-link" type="button" aria-label="Show Along the fissure"></button></li>
+      <li class="dotnav-item"><button class="dotnav-link" type="button" aria-label="Show The coast line"></button></li>
+      <li class="dotnav-item"><button class="dotnav-link" type="button" aria-label="Show Inside the crater"></button></li>
     </ul>
     <div class="paddlenav">
       <button class="paddlenav-arrow paddlenav-prev" type="button" aria-label="Previous" disabled><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M13.3 2.3 5.6 10l7.7 7.7 1.4-1.4L8.4 10l6.3-6.3z"/></svg></button>
@@ -462,49 +603,53 @@
     </div>
   </section>
 
-  <!-- quiet, by inversion: the one light section on the page. 64px of type on a
-       bare surface is a legitimate composition BECAUSE it sits between two
+  <!-- quiet, by inversion: the one light section on the page. 64px of type on
+       a bare surface is a legitimate composition BECAUSE it sits between two
        pictures. A page made only of this is the blank canvas again. -->
   <section class="section section--dark">
     <div class="section-content">
-      <h2 class="t-headline-elevated" data-reveal>Nothing here was drawn.</h2>
-      <p class="t-intro" data-reveal>Every frame has a date, a place, and the name of whoever was standing there.</p>
+      <h2 class="t-headline-elevated" data-reveal>Nothing here is a guess.</h2>
+      <p class="t-intro" data-reveal>Every number on this page is one the network recorded, with the station and the hour it came from.</p>
     </div>
   </section>
 
-  <!-- quiet: the page's longest read. Apple's pages carry a block like this
-       before the footer — plain prose in two columns, no tiles, no icons. It
-       is what keeps a page of photographs from being a gallery. -->
-  <section class="section" id="notes">
+  <!-- The specification block every product page carries before the footer.
+       Two columns of plain rows on a hairline, no tiles and no icons. -->
+  <section class="section" id="specs">
     <div class="section-content">
-      <h2 class="t-headline" data-reveal>Field notes.</h2>
-      <div class="notes" data-reveal>
-        <div>
-          <h3 class="t-label">Two names for the same rock</h3>
-          <p class="t-body">P&#x101;hoehoe runs smooth and skins over into rope. &#x02BB;A&#x02BB;&#x101; tears itself into loose clinker that crunches underfoot and shreds boots. They are the same melt; the difference is how fast it was moving and how much gas it had left when it cooled.</p>
-          <h3 class="t-label">Why the steam matters</h3>
-          <p class="t-body">A plume is not the eruption. It is groundwater meeting something still hot enough to boil it, which means the crack it is rising through has not closed. Mapping plumes maps the part of the system that is still open.</p>
-        </div>
-        <div>
-          <h3 class="t-label">A century on the rim</h3>
-          <p class="t-body">The Hawaiian Volcano Observatory has sat on the edge of this caldera since 1912. Its archive is the reason a page like this can exist at all: more than a hundred years of photographs taken as part of the job, placed in the public domain the day they were filed.</p>
-          <h3 class="t-label">What the record is for</h3>
-          <p class="t-body">Eruptions are compared against their predecessors. A frame from 1959 and a frame from 2018 are evidence in the same argument, which is why each one carries a date, a place and a name, and why none of them has been improved.</p>
-        </div>
+      <h2 class="t-headline" data-reveal>Tech specs.</h2>
+      <dl class="specs" data-reveal>
+        <div><dt class="t-body-reduced">Sensors</dt><dd class="t-body">Biaxial tiltmeter, 0.1 µrad resolution. Three-component broadband seismometer, 120 s to 100 Hz. GNSS, 1 Hz.</dd></div>
+        <div><dt class="t-body-reduced">Sampling</dt><dd class="t-body">Tilt and GNSS at 1 Hz, seismic at 200 Hz, timestamped against GPS and a local oscillator that holds to 2 ms through a four-day outage.</dd></div>
+        <div><dt class="t-body-reduced">Power</dt><dd class="t-body">60 W panel, 100 Ah lithium iron phosphate. Eleven days without sun, measured in December.</dd></div>
+        <div><dt class="t-body-reduced">Link</dt><dd class="t-body">900 MHz mesh to any two neighbours, cellular or satellite at the gateway. Four days of local storage if everything is down.</dd></div>
+        <div><dt class="t-body-reduced">Enclosure</dt><dd class="t-body">IP68, −20 to 70 °C, sulphur-dioxide rated gaskets. One captive screw to open.</dd></div>
+        <div><dt class="t-body-reduced">Mass</dt><dd class="t-body">8.4 kg with battery. One person, one trip.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-content">
+      <h2 class="t-headline" data-reveal>Put one on the mountain.</h2>
+      <p class="t-intro" data-reveal>Deployments start at a pair: one at the source, one where you need the warning.</p>
+      <div class="cta-row" data-reveal>
+        <a class="button" href="#specs">Request a quote</a>
+        <a class="button button--secondary" href="#credits">Read the credits</a>
       </div>
     </div>
   </section>
 
   <section class="section" id="credits">
     <div class="section-content">
-      <p class="t-body-reduced" data-reveal>Photographs by the U.S. Geological Survey, the National Park Service and the Hawaiian Volcano Observatory. All public domain.</p>
+      <p class="t-body-reduced" data-reveal>Ridge is a fictional product, invented so this page has something to sell. The photographs are real: U.S. Geological Survey, the National Park Service and the Hawaiian Volcano Observatory, all public domain. The interface clips were rendered from the scenes in <code>example/scenes/</code>.</p>
       <ul class="credits t-caption">
         <li>Hero, carousel 4 — <a href="https://commons.wikimedia.org/wiki/File:Kilauea_Lava_Lake_(12792432484).jpg">Kīlauea lava lake</a> and <a href="https://commons.wikimedia.org/wiki/File:Fountaining_at_a_fissure_within_Halema%CA%BBuma%CA%BBu_crater,_January_2021.jpg">Halemaʻumaʻu fissure</a>, USGS.</li>
         <li>Band — <a href="https://commons.wikimedia.org/wiki/File:November_30,_2022_%E2%80%94_Mauna_Loa_Lava_Flow_(111218).jpg">Mauna Loa lava flow</a>, USGS Hawaiian Volcano Observatory.</li>
-        <li>Cards — <a href="https://commons.wikimedia.org/wiki/File:Lava_fountain_from_K%C4%ABlauea%27s_ongoing_summit_eruption_(96758).jpg">summit fountain</a>, <a href="https://commons.wikimedia.org/wiki/File:Kilauea_Fissure_8_cone_erupting_on_6-28-2018.jpg">fissure 8</a>, <a href="https://commons.wikimedia.org/wiki/File:Lava_Sampling_(16368518133).jpg">lava sampling</a>, USGS.</li>
+        <li>Rows — <a href="https://commons.wikimedia.org/wiki/File:Lava_fountain_from_K%C4%ABlauea%27s_ongoing_summit_eruption_(96758).jpg">summit fountain</a>, <a href="https://commons.wikimedia.org/wiki/File:Kilauea_Fissure_8_cone_erupting_on_6-28-2018.jpg">fissure 8</a>, <a href="https://commons.wikimedia.org/wiki/File:Lava_Sampling_(16368518133).jpg">lava sampling</a>, USGS.</li>
         <li>Pinned, carousel 1–3 — <a href="https://commons.wikimedia.org/wiki/File:Eruption_at_the_summit_of_Kilauea_volcano_(118574).jpeg">summit eruption</a>, <a href="https://commons.wikimedia.org/wiki/File:Lava_fountain_dome_2.jpg">dome fountain</a>, <a href="https://commons.wikimedia.org/wiki/File:Pahoeoe_fountain_edit2.jpg">pāhoehoe fountain</a>, <a href="https://commons.wikimedia.org/wiki/File:USGS_K%C4%ABlauea_multimediaFile-2066.jpg">ocean entry</a>, USGS.</li>
       </ul>
-      <p class="t-caption" style="max-width: 62ch; margin-inline: auto">Dates and places are those recorded with each photograph. This page is a design example: it carries no Apple font, image, icon or wordmark, and the type scale, rhythm and motion are the measured system described in the skill.</p>
+      <p class="t-caption" style="max-width: 62ch; margin-inline: auto">No real instrument, price or deployment is described here, and the numbers belong to the invented product. This page is a design example: it carries no Apple font, image, icon or wordmark, and the type scale, rhythm and motion are the measured system described in the skill.</p>
     </div>
   </section>
 </main>

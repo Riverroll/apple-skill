@@ -64,6 +64,50 @@ for (const t of ["tools/audit.mjs", "tools/make-clip.sh"]) {
     }
   }
 }
+// The scene renderer: a clip you can rebuild from source. Its output has to be
+// the same ladder make-clip.sh produces, and its input has to be deterministic
+// — a scene that animates itself renders differently on a slow machine.
+const renderer = path.join(ROOT, "tools/render-clip.mjs");
+ok("tool exists: tools/render-clip.mjs", fs.existsSync(renderer));
+if (fs.existsSync(renderer)) {
+  const src = fs.readFileSync(renderer, "utf8");
+  ok("render-clip.mjs renders the measured ladder",
+     /name:\s*"small",\s*w:\s*420,\s*h:\s*480/.test(src) &&
+     /name:\s*"medium",\s*w:\s*934,\s*h:\s*576/.test(src) &&
+     /name:\s*"large",\s*w:\s*1260,\s*h:\s*612/.test(src));
+  ok("render-clip.mjs renders each crop at its own aspect",
+     /setDeviceMetricsOverride[\s\S]{0,160}crop\.w[\s\S]{0,60}crop\.h/.test(src));
+  ok("render-clip.mjs drives the scene rather than timing it",
+     /setFrame\(/.test(src) && !/performance\.now|Date\.now/.test(src));
+  ok("render-clip.mjs drops the audio track and puts moov first",
+     /"-an"/.test(src) && /faststart/.test(src));
+  ok("render-clip.mjs exports the still that ships instead", /start-\$\{crop\.name\}\.webp/.test(src));
+  ok("render-clip.mjs captures the documented 90 frames", /arg\("frames",\s*90\)/.test(src));
+}
+
+// Every scene has to hold up its end of that contract.
+const sceneDir = path.join(ROOT, "example", "scenes");
+const scenes = fs.existsSync(sceneDir)
+  ? fs.readdirSync(sceneDir).filter((f) => f.endsWith(".html")) : [];
+ok("the repo ships worked scenes", scenes.length >= 3);
+for (const f of scenes) {
+  const src = fs.readFileSync(path.join(sceneDir, f), "utf8");
+  ok(`scene ${f} exposes setFrame(t)`, /window\.setFrame\s*=/.test(src));
+  ok(`scene ${f} has no self-driven motion`,
+     !/@keyframes|requestAnimationFrame\s*\(\s*function|animation(-name)?\s*:\s*(?!none)/.test(src));
+}
+const sceneCss = fs.existsSync(path.join(sceneDir, "scene.css"))
+  ? fs.readFileSync(path.join(sceneDir, "scene.css"), "utf8") : "";
+ok("the scene bed disables animation and transition outright",
+   /animation:\s*none\s*!important/.test(sceneCss) && /transition:\s*none\s*!important/.test(sceneCss));
+
+// A UI clip is framed at the MEDIA breakpoints, not the layout ones: a box
+// that changes shape at 734 while the file changes at 780 crops a crop.
+const showcase = fs.readFileSync(path.join(ROOT, "example", "index.html"), "utf8");
+ok("the showcase frames its UI clips at the media breakpoints",
+   /min-width:\s*570px\)[^}]*aspect-ratio:\s*934\s*\/\s*576/.test(showcase) &&
+   /min-width:\s*780px\)[^}]*aspect-ratio:\s*1260\s*\/\s*612/.test(showcase));
+
 ok("SKILL.md points at the audit tool", /tools\/audit\.mjs/.test(skillMd));
 
 // plugin manifests parse

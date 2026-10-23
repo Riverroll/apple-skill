@@ -488,6 +488,9 @@ Order of preference, same logic as `imagery.md`: licence first, quality second.
 
 1. **Your own capture.** A 3-second clip of the actual product beats any
    library. A phone at 4K/60 downsampled to 1260×612 looks correct.
+1. **A scene you render.** If the subject is software, you do not need a
+   camera at all — see the next section. This is first-equal with your own
+   capture, and ahead of everything below it.
 2. **Coverr** (coverr.co) and **Mixkit** (mixkit.co) — free for commercial use,
    no attribution, short loops shot for exactly this slot. The best fit for
    abstract texture: liquid, cloth, light, machinery.
@@ -516,6 +519,80 @@ crops and CRFs above. `example/motion/` is built with it.
 
 Never a watermarked preview, never a clip lifted from a product page — a
 competitor's hero video in your tile is the most visible possible failure.
+
+## If the subject is software, render it
+
+Most pages ship as pages of stills because nobody had footage. For a hardware
+product that is a real constraint. For an interface it is not: the interface
+is already a browser, so the clip can be **rendered from the same CSS the
+product is built in**.
+
+The method, and `tools/render-clip.mjs` in this repo implements it:
+
+1. Write the shot as an HTML file — a *scene* — that exposes exactly one
+   function:
+
+   ```js
+   window.setFrame = function (t) { /* t runs 0 → 1; paint that instant */ };
+   ```
+
+2. Forbid self-driven motion inside it. No `@keyframes`, no `transition`, no
+   `requestAnimationFrame`. A transition smears across two captures and a
+   keyframe depends on wall-clock time, so either one makes the output depend
+   on how fast the renderer happened to be running.
+
+   ```css
+   *, *::before, *::after { animation: none !important; transition: none !important; }
+   ```
+
+3. Drive it from the renderer: set the viewport to a crop, call `setFrame(i/89)`,
+   wait two animation frames, capture, repeat 90 times, encode at 30fps. Three
+   seconds, one GOP, no audio — the same file the rest of this reference
+   describes.
+
+   ```sh
+   node tools/render-clip.mjs example/scenes/tilt.html example/media/tilt
+   ```
+
+Three consequences worth knowing before you choose this route:
+
+- **It is deterministic.** Same input, same bytes. A clip becomes a build
+  artefact you can regenerate when the product's colour changes, instead of a
+  binary somebody has to re-shoot.
+- **Render each crop at its own aspect.** The renderer sets the viewport to
+  420×480, then 934×576, then 1260×612, and the scene lays itself out for each
+  one. That is art direction done properly — the portrait version is a
+  portrait composition, not the wide one squeezed. A scene that only works at
+  2.06 is a scene that is not finished.
+- **It is cheap.** Measured on the three scenes in `example/scenes/`: 18–50 KB
+  at 1×, against ~260 KB for photographic footage. The bits-per-pixel table
+  above predicts it — flat graphics on a dark ground sit at the 0.014–0.02
+  end of a 58× range.
+
+What it is *not* good for: anything with a real surface in it. A rendered
+scene of a phone tumbling through space is a worse version of a photograph of
+a phone. Render what is genuinely made of pixels — a chart drawing itself, a
+list making room for a new row, a map filling in — and photograph everything
+that is made of matter.
+
+One composition rule, because a rendered clip is usually full of type: **frame
+it, do not bleed it**. Full-bleed is for photographs. A UI clip set edge to
+edge is upscaled past its source width and its 15px labels land at 40px, so it
+reads as a slide rather than as a product. Put it in the content column, give
+it the card radius, and let the frame's aspect follow the *source* ladder
+rather than the layout breakpoints:
+
+```css
+.band--ui .media-stack { aspect-ratio: 420 / 480; }            /* the small crop */
+@media (min-width: 570px) { .band--ui .media-stack { aspect-ratio: 934 / 576; } }
+@media (min-width: 780px) { .band--ui .media-stack { aspect-ratio: 1260 / 612; } }
+```
+
+Those two numbers are the media breakpoints, not the layout ones. A box that
+changes shape at 734 while the file changes shape at 780 crops a crop.
+
+And put the caption **under** it, on the surface. Text over a photograph needs
+a scrim; text over an interface needs somewhere else to be.
 
 ## What goes wrong
 

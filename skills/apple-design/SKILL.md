@@ -228,6 +228,15 @@ decodes from frame 0. That is the stutter. `assets/apple-base.css` carries the
 stack, the crossfade and the timing tokens; `tools/make-clip.sh` builds the
 six-file ladder from a master or a photograph.
 
+**"We have no footage" is not a reason to ship a page of stills.** If the
+subject is software, render the clip: write the shot as an HTML scene that
+exposes `setFrame(t)` and nothing that animates by itself, then
+`node tools/render-clip.mjs scene.html out/` captures 90 frames at each crop
+and encodes the same ladder. Deterministic, 18–50 KB, and rebuildable when
+the product's colour changes. Frame a rendered UI clip in the content column
+rather than bleeding it full width, and put its caption under it.
+`references/media.md` has the method; `example/scenes/` has three worked ones.
+
 ### Parallax is CSS, not a scroll handler
 
 Apple pins a section with `position: sticky` and buys the scroll distance with a

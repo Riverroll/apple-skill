@@ -47,6 +47,7 @@ cp -r apple-skill/skills/apple-design ~/.claude/skills/
 ```
 tools/audit.mjs                audit any live URL — see below
 tools/make-clip.sh             build one clip's six-file ladder and its stills
+tools/render-clip.mjs          render a clip from a scene you wrote — no footage needed
 skills/apple-design/
   SKILL.md                     what to change and what to leave alone, token roles, the four rules
   references/restraint.md      one accent, three inks, three radii, two weights
@@ -207,7 +208,28 @@ double exposure at the midpoint.
 
 ```sh
 tools/make-clip.sh master.mov out/     # or a photograph: it gets a 1.11x push
+node tools/render-clip.mjs scene.html out/   # no footage at all: render one
 ```
+
+### When there is no footage
+
+Most pages that need a clip do not have one, and that is why they ship as
+pages of stills. `tools/render-clip.mjs` takes the other route: a *scene* is an
+HTML file exposing one function, `setFrame(t)`, with `t` running 0 → 1. The
+tool drives a headless browser through 90 values of it, captures each paint,
+and encodes the three crops at two densities. Nothing animates by itself — no
+`@keyframes`, no `transition`, no `requestAnimationFrame` — so the file a slow
+machine produces is byte-identical to the file a fast one produces, and the
+clip can be re-rendered from source instead of re-shot.
+
+The scene is rendered **at each crop's own aspect**, so the portrait version is
+a portrait composition rather than the desktop one letterboxed. And because it
+is a real browser, the scene is the same CSS the product is built in.
+
+`example/scenes/` holds the three used on the showcase page: a tilt reading
+drawing itself, a station network reporting in, an alert settling into a list.
+They cost 18–50 KB at 1&times; against 260 KB for the photographic clips, which
+is what the bits-per-pixel table in `references/media.md` predicts.
 
 `example/motion/` demonstrates all of it; `example/motion/flat.html` is the
 same content with every mistake in it, and the audit's six media findings fire
@@ -247,11 +269,17 @@ MIT, for the skill's own text and CSS.
 
 ## Example
 
-`example/index.html` is a small page built on `assets/apple-base.css` — hero,
-feature grid, a sticky parallax section, an inverse section, staggered reveal.
-Its palette is deliberately **not** Apple's: warm, dark, its own identity, while
-every proportion, tracking value and curve is Apple's. That is the point of the
-skill in one file.
+`example/index.html` is a **marketing page** for an invented product — Ridge, a
+ground-deformation network — built on `assets/apple-base.css`: hero, media
+bands, a four-number stat row, alternating feature rows, a pinned scroll-linked
+section, a carousel, a spec block and a close. Its palette is deliberately
+**not** Apple's: warm, dark, its own identity, while every proportion, tracking
+value and curve is Apple's. That is the point of the skill in one file.
+
+Four of its media are clips, and three of those were rendered from
+`example/scenes/` rather than filmed — the product's own interface, moving.
+The photographs are public domain USGS and NPS frames; the product, its
+numbers and its prices are fiction, and the page says so above the credits.
 
 ## Testing
 
@@ -259,7 +287,7 @@ The suite asserts a page built with the skill against Apple's own shipped
 values — computed styles in a real browser, compared to `assets/type-scale.json`:
 
 ```sh
-node test/structure.mjs                 # the skill loads, refs resolve, no Apple assets
+node test/structure.mjs                 # the skill loads, refs resolve, scenes and tools hold their contract
 node test/conformance.mjs <url>         # computed styles vs the measured values
 node test/restraint.mjs                 # the before/after pair, self-contained
 node test/erp.mjs                       # the dense-tool pair, self-contained
@@ -268,7 +296,7 @@ node test/media.mjs                     # the clip ladder, the stack, the fallba
 node test/gallery.mjs                   # the carousel: paddles, dots, keyboard
 ```
 
-307 checks across the seven. `test/media.mjs` is the widest of them: it reads
+338 checks across the seven. `test/media.mjs` is the widest of them: it reads
 the six clip files off disk (moov before mdat, no audio track, inside the byte
 budget, three crops at three aspect ratios), then drives a real browser through
 the markup as parsed, the source the loader picks at 1440px, at 2&times; and at

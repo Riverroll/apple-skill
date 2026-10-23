@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ridge — tilt readout</title>
+<link rel="stylesheet" href="scene.css">
+<style>
+  body { align-content: stretch; padding: 5% 6%; grid-template-rows: auto 1fr; gap: 4%; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 1em; }
+  .value { font-size: clamp(28px, 5vw, 64px); font-weight: 600; line-height: 1; }
+  .unit  { font-size: 0.42em; font-weight: 400; color: var(--ink-secondary); margin-left: 0.3em; }
+  .chart { position: relative; min-height: 0; }
+  svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .trace { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; }
+  .head-dot { fill: var(--accent); }
+  .head-ring { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+  .pill {
+    position: absolute; transform: translate(-50%, -100%);
+    background: color-mix(in srgb, var(--surface) 82%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+    border-radius: 8px; padding: 6px 10px; white-space: nowrap;
+    font-size: 12px; line-height: 1.2; letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    backdrop-filter: blur(12px);
+  }
+  /* the portrait crop has no room for a wide header or a wide pill */
+  @media (max-aspect-ratio: 1/1) {
+    body { padding: 7% 7%; }
+    .head { display: block; }
+    .head > span { display: block; }
+    .value { font-size: 40px; margin-top: 0.25em; }
+    .pill { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+  <div class="head">
+    <span class="label">Tilt &middot; Uwēkahuna</span>
+    <span class="value readout"><span id="v">0.00</span><span class="unit">&micro;rad</span></span>
+  </div>
+  <div class="chart" id="chart">
+    <svg id="svg" aria-hidden="true">
+      <g id="grid"></g>
+      <path id="trace" class="trace"></path>
+      <circle id="ring" class="head-ring" r="7"></circle>
+      <circle id="dot" class="head-dot" r="3.5"></circle>
+    </svg>
+    <div class="pill" id="pill"><strong id="pv">+2.41 &micro;rad</strong> &middot; 06:41</div>
+  </div>
+
+<script>
+// The series is a fixed list, not a random walk, so every render of this scene
+// produces byte-identical frames. 36 readings, the last six climbing: an
+// inflation pulse, which is the thing the product claims to catch.
+const S = [0.10,0.08,0.12,0.09,0.14,0.11,0.16,0.13,0.18,0.15,
+           0.21,0.19,0.24,0.22,0.28,0.25,0.31,0.29,0.34,0.33,
+           0.38,0.36,0.42,0.45,0.43,0.52,0.58,0.64,0.71,0.78,
+           0.86,1.02,1.24,1.52,1.84,2.41];
+const svg = document.getElementById("svg"), chart = document.getElementById("chart");
+const trace = document.getElementById("trace"), dot = document.getElementById("dot");
+const ring = document.getElementById("ring"), pill = document.getElementById("pill");
+let pts = [], len = 0;
+
+function layout() {
+  const w = chart.clientWidth, h = chart.clientHeight;
+  svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  // leave headroom at the top for the pill, and a floor so the trace does not
+  // sit on the edge of the frame
+  const top = h * 0.16, bot = h * 0.92, max = 2.6;
+  // inset the x range so the trace starts and ends inside the frame rather
+  // than being cut by it
+  const x0 = w * 0.02, x1 = w * 0.96;
+  pts = S.map((v, i) => [
+    x0 + (i / (S.length - 1)) * (x1 - x0),
+    bot - (v / max) * (bot - top),
+  ]);
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  for (let i = 1; i <= 3; i++) {
+    const y = Math.round(bot - (i / 4) * (bot - top)) + 0.5;
+    grid.insertAdjacentHTML("beforeend",
+      `<line class="hair" x1="0" y1="${y}" x2="${w}" y2="${y}"></line>`);
+  }
+  trace.setAttribute("d", pts.map((p, i) =>
+    (i ? "L" : "M") + p[0].toFixed(2) + " " + p[1].toFixed(2)).join(" "));
+  len = trace.getTotalLength();
+  trace.style.strokeDasharray = len;
+}
+
+const easeOut = (x) => 1 - Math.pow(1 - x, 3);        // the draw
+const clamp01 = (x) => Math.min(1, Math.max(0, x));
+
+// t runs 0 -> 1 over the three seconds. The draw owns the first 72%; the rest
+// is the readout settling and the pill arriving, so the clip ends on a held
+// frame instead of mid-gesture — a loop that cuts mid-motion reads as a glitch.
+window.setFrame = function (t) {
+  const draw = easeOut(clamp01(t / 0.72));
+  trace.style.strokeDashoffset = len * (1 - draw);
+  const p = trace.getPointAtLength(len * draw);
+  for (const el of [dot, ring]) { el.setAttribute("cx", p.x); el.setAttribute("cy", p.y); }
+  ring.style.opacity = (0.5 * (1 - draw)).toFixed(3);
+
+  // the number reads what the trace is showing, not a separate count-up
+  const i = draw * (S.length - 1);
+  const v = S[Math.floor(i)] + (S[Math.min(S.length - 1, Math.ceil(i))] - S[Math.floor(i)]) * (i % 1);
+  document.getElementById("v").textContent = (v >= 0 ? "+" : "") + v.toFixed(2);
+
+  const show = clamp01((t - 0.74) / 0.18);
+  pill.style.opacity = show.toFixed(3);
+  // the head reaches the right edge; the pill must not follow it off-frame
+  const half = pill.offsetWidth / 2 + 8;
+  pill.style.left = Math.min(chart.clientWidth - half, Math.max(half, p.x)) + "px";
+  pill.style.top = (p.y - 18 + 10 * (1 - easeOut(show))) + "px";
+};
+
+layout();
+addEventListener("resize", () => { layout(); window.setFrame(0); });
+window.setFrame(0);
+</script>
+</body>
+</html>

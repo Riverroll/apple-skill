@@ -73,6 +73,26 @@ for (const [name, , , budget] of LADDER) {
 for (const n of ["small", "medium", "large"])
   ok(`${n}: has a start frame`, fs.existsSync(path.join(CLIPS, `start-${n}.webp`)));
 
+// The rendered clips — scenes, not footage — ship the same ladder. They are
+// checked as a set rather than file by file: what matters is that a clip built
+// by tools/render-clip.mjs is indistinguishable, on disk, from one built from
+// a master.
+for (const dir of ["tilt", "network", "alert"]) {
+  const d = path.join(ROOT, "example/media", dir);
+  const files = LADDER.map(([n]) => path.join(d, `${n}.mp4`));
+  const present = files.filter((f) => fs.existsSync(f));
+  ok(`${dir}/: the ladder is six files`, present.length === LADDER.length,
+     `${present.length} of ${LADDER.length}`);
+  const facts = present.map(mp4Facts);
+  ok(`${dir}/: no file carries a sound track`, facts.every((m) => !m.audio));
+  ok(`${dir}/: every file has moov before mdat`, facts.every((m) => m.faststart));
+  const over = present.filter((f, i) => facts[i].bytes > LADDER[i][3]);
+  ok(`${dir}/: inside the byte budget`, over.length === 0,
+     over.map((f) => path.basename(f)).join(" "));
+  ok(`${dir}/: has all three start frames`,
+     ["small", "medium", "large"].every((n) => fs.existsSync(path.join(d, `start-${n}.webp`))));
+}
+
 // art direction, not one render at three sizes
 const aspect = (w, h) => w / h;
 const ars = LADDER.filter(([n]) => !n.endsWith("_2x")).map(([n, w, h]) => [n, aspect(w, h)]);
