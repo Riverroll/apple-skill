@@ -91,6 +91,15 @@ for (const dir of ["tilt", "network", "alert"]) {
      over.map((f) => path.basename(f)).join(" "));
   ok(`${dir}/: has all three start frames`,
      ["small", "medium", "large"].every((n) => fs.existsSync(path.join(d, `start-${n}.webp`))));
+  // and the end frame, which is the one reduced motion and no-JS get: frame 0
+  // of a clip whose point is its end state shows nothing having happened
+  ok(`${dir}/: has all three end frames`,
+     ["small", "medium", "large"].every((n) => fs.existsSync(path.join(d, `end-${n}.webp`))));
+  ok(`${dir}/: the end frame is not the start frame`,
+     ["small", "medium", "large"].some((n) => {
+       const a = path.join(d, `start-${n}.webp`), b = path.join(d, `end-${n}.webp`);
+       return fs.existsSync(a) && fs.existsSync(b) && !fs.readFileSync(a).equals(fs.readFileSync(b));
+     }));
 }
 
 // art direction, not one render at three sizes

@@ -208,6 +208,20 @@ body {
 html.no-js .media-clip,
 html.reduced-motion .media-clip { display: none; }
 
+/* Which still. The start frame is the one under the clip: anything else and
+   the handover snaps. But a clip whose point is its END state — a reading
+   drawn, a count filled, an alert landed — has a frame 0 that shows nothing
+   happening, and that is the frame reduced motion and no-JS would otherwise
+   be left with, under a headline claiming it did. So a stack may carry both,
+   and the fallback swaps which one is in the layout. The hidden one keeps
+   loading="lazy", so it is never fetched: a lazy image with no layout box is
+   not loaded. */
+.media-still--end { display: none; }
+html.no-js .media-still--start,
+html.reduced-motion .media-still--start { display: none; }
+html.no-js .media-still--end,
+html.reduced-motion .media-still--end { display: block; }
+
 /* ---- crossfade between two stills ----
    Out fast, in slow, with a hold between them. Symmetric timing produces a
    muddy double exposure at the midpoint; this reads as one image replacing

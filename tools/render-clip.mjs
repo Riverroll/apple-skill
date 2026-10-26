@@ -128,12 +128,20 @@ try {
     enc(crop.w * 2, crop.h * 2, CRF - 2, `${crop.name}_2x.mp4`);
     enc(crop.w, crop.h, CRF, `${crop.name}.mp4`);
 
-    // the still that ships when the clip is slow, blocked or unwanted
-    run("ffmpeg", ["-nostdin", "-loglevel", "error", "-y",
-      "-i", path.join(outDir, `${crop.name}.mp4`), "-frames:v", "1",
-      "-f", "image2", "-c:v", "png", path.join(frames, "still.png")]);
-    run("cwebp", ["-quiet", "-q", "82", path.join(frames, "still.png"),
-      "-o", path.join(outDir, `start-${crop.name}.webp`)]);
+    // Two stills, which is the ladder apple.com ships. The START frame is what
+    // sits under the clip: it has to be the frame the video begins on or the
+    // handover snaps. The END frame is the fallback for reduced motion and no
+    // JS, because on a clip whose point is the end state — the trace drawn,
+    // the alert landed — frame 0 is a picture of nothing happening, under a
+    // headline claiming it did.
+    for (const [frame, prefix] of [["0", "start"], [String(FRAMES - 1), "end"]]) {
+      run("ffmpeg", ["-nostdin", "-loglevel", "error", "-y",
+        "-i", path.join(dir, String(frame).padStart(4, "0") + ".png"),
+        "-vf", `scale=${crop.w}:${crop.h}:flags=lanczos`,
+        "-frames:v", "1", "-f", "image2", "-c:v", "png", path.join(frames, "still.png")]);
+      run("cwebp", ["-quiet", "-q", "82", path.join(frames, "still.png"),
+        "-o", path.join(outDir, `${prefix}-${crop.name}.webp`)]);
+    }
 
     const kb = (f) => Math.round(fs.statSync(path.join(outDir, f)).size / 1024);
     console.log(`${crop.name.padEnd(8)} ${String(crop.w).padStart(4)}x${String(crop.h).padEnd(5)} ` +

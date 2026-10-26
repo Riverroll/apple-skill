@@ -81,7 +81,8 @@ if (fs.existsSync(renderer)) {
      /setFrame\(/.test(src) && !/performance\.now|Date\.now/.test(src));
   ok("render-clip.mjs drops the audio track and puts moov first",
      /"-an"/.test(src) && /faststart/.test(src));
-  ok("render-clip.mjs exports the still that ships instead", /start-\$\{crop\.name\}\.webp/.test(src));
+  ok("render-clip.mjs exports a start frame and an end frame",
+     /\["0", "start"\]/.test(src) && /String\(FRAMES - 1\), "end"/.test(src));
   ok("render-clip.mjs captures the documented 90 frames", /arg\("frames",\s*90\)/.test(src));
 }
 
@@ -117,6 +118,18 @@ ok("the ink-over-media check sweeps the whole page, not the first screen",
 // a spine that does not run forwards is decoration.
 const clocks = [...showcase.matchAll(/class="[^"]*\bclock\b[^"]*"[^>]*>(\d\d:\d\d)</g)]
   .map((m) => m[1]);
+// The fallback has to show the state the headline claims. frame 0 of a clip
+// whose point is its end state is a picture of nothing having happened.
+ok("apple-base.css carries the end-frame fallback",
+   /\.media-still--end\s*{\s*display:\s*none/.test(baseCss) &&
+   /html\.reduced-motion \.media-still--start/.test(baseCss));
+ok("the showcase ships both stills for every rendered clip",
+   (showcase.match(/media-still--start/g) || []).length === 3 &&
+   (showcase.match(/media-still--end/g) || []).length === 3);
+ok("the showcase hands the no-JS path the same route",
+   /<html[^>]*class="[^"]*\bno-js\b/.test(showcase) &&
+   /classList\.remove\("no-js"\)/.test(showcase));
+
 ok("the showcase tells one event in order", clocks.length >= 4 &&
    clocks.every((t, i) => i === 0 || t > clocks[i - 1]), clocks.join(" "));
 

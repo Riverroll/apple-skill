@@ -345,6 +345,44 @@ and the video element unloads itself (`unloadAtEnd`) to give the buffer back.
 Without an end frame, a clip that unloads snaps back to frame 0 — the product
 closes again after you watched it open.
 
+There is a second, sharper reason to ship one, and it decides which still a
+**fallback** gets. The start frame is the right picture *under* the clip —
+anything else and the handover snaps. But on a clip whose whole point is its
+end state (a reading drawn, a count filled, an alert landed), frame 0 is a
+picture of nothing having happened yet. Leave that as the reduced-motion
+fallback and the section ends up showing an empty list under a headline
+saying "Four phones ring."
+
+So the stack carries both, and the fallback swaps which one is in the layout:
+
+```html
+<picture class="media-layer media-still media-still--start"> … start-large.webp … </picture>
+<picture class="media-layer media-still media-still--end">   … end-large.webp   … </picture>
+```
+
+```css
+.media-still--end { display: none; }
+html.no-js .media-still--start,
+html.reduced-motion .media-still--start { display: none; }
+html.no-js .media-still--end,
+html.reduced-motion .media-still--end { display: block; }
+```
+
+Neither one costs a wasted request: the hidden `<picture>` keeps
+`loading="lazy"`, and a lazy image with no layout box is never fetched.
+
+`tools/render-clip.mjs` exports both ladders — `start-<crop>.webp` and
+`end-<crop>.webp` — from the frames it already captured, so this costs
+nothing to produce.
+
+And note what the fallback is keyed on: a **class on `<html>`**, set by the
+same script that would have loaded the clip, not a bare
+`@media (prefers-reduced-motion)` block. The class is what lets `no-js` reuse
+the identical path. Setting `hidden` on the whole stack instead takes the
+photograph down with the video — and if the stylesheet still gives the stack
+a `display`, `hidden` loses, so the stack stays on screen and vanishes only
+from the accessibility tree. Worst of both.
+
 ## Transitions between images
 
 Four techniques, all measured from shipped CSS. Each is driven by **one scalar**

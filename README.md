@@ -201,6 +201,11 @@ frame 0 sits in the same grid cell underneath it, so a slow connection, a
 blocked request or `prefers-reduced-motion` lands on a photograph. With the
 preference set Apple does not slow the clip down, it never fetches it.
 
+Under `prefers-reduced-motion` — or with JS off — the fallback is not frame 0.
+A clip whose point is its end state has a frame 0 that shows nothing having
+happened, so the stack carries **both** ladders and swaps which one is in the
+layout. The hidden `<picture>` keeps `loading="lazy"` and is never fetched.
+
 `references/media.md` has the loader's measured windows (download at
 `top − 200vh`, play at `top − 100vh`, never paused on exit), the ffmpeg
 recipes, the byte budgets, and the four image-transition techniques with their
@@ -308,7 +313,7 @@ node test/media.mjs                     # the clip ladder, the stack, the fallba
 node test/gallery.mjs                   # the carousel: paddles, dots, keyboard
 ```
 
-343 checks across the seven. `test/media.mjs` is the widest of them: it reads
+352 checks across the seven. `test/media.mjs` is the widest of them: it reads
 the six clip files off disk (moov before mdat, no audio track, inside the byte
 budget, three crops at three aspect ratios), then drives a real browser through
 the markup as parsed, the source the loader picks at 1440px, at 2&times; and at

@@ -71,7 +71,8 @@ traced, sampled or generated from somebody else's work.
 | `tilt/*.mp4` | the six measured sizes | `band-2400.webp` — [Mauna Loa lava flow](https://commons.wikimedia.org/wiki/File:November_30,_2022_%E2%80%94_Mauna_Loa_Lava_Flow_(111218).jpg), USGS HVO | Public domain bed, MIT overlay |
 | `network/*.mp4` | the same six | `slide-sea.webp` — [USGS Kīlauea multimediaFile-2066](https://commons.wikimedia.org/wiki/File:USGS_K%C4%ABlauea_multimediaFile-2066.jpg), USGS | Public domain bed, MIT overlay |
 | `alert/*.mp4` | the same six | `card-rift.webp` — [Kilauea Fissure 8 cone erupting on 6-28-2018](https://commons.wikimedia.org/wiki/File:Kilauea_Fissure_8_cone_erupting_on_6-28-2018.jpg), USGS | Public domain bed, MIT overlay |
-| `start-small.webp`, `start-medium.webp`, `start-large.webp` in each | frame 0 of each crop | exported from the encoded file | as above |
+| `start-small.webp`, `start-medium.webp`, `start-large.webp` in each | frame 0 of each crop — the frame under the clip | exported from the rendered frames | as above |
+| `end-small.webp`, `end-medium.webp`, `end-large.webp` in each | the last frame — the fallback for reduced motion and no JS | exported from the rendered frames | as above |
 
 Putting the data on the picture roughly quadrupled them — 20&ndash;60 KB at
 1&times; where the same scenes on a flat dark panel cost 18&ndash;50 KB, and

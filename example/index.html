@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -455,10 +455,18 @@
          aria-label="A tilt reading drawing itself over a photograph of the crater floor. The trace is flat for most of its length, then climbs steeply as the reading passes two microradians, and a label settles on the final point.">
       <video class="media-layer media-clip" preload="none" muted playsinline
              data-basepath="media/tilt/" data-ladder="small,medium,large"></video>
-      <picture class="media-layer media-still">
+      <picture class="media-layer media-still media-still--start">
         <source media="(min-width: 780px)" srcset="media/tilt/start-large.webp">
         <source media="(min-width: 570px)" srcset="media/tilt/start-medium.webp">
         <img src="media/tilt/start-small.webp" width="420" height="480" alt=""
+             loading="lazy" decoding="async">
+      </picture>
+      <!-- the frame the clip ends on, for reduced motion and no JS: frame 0 of
+           this one is a picture of nothing having happened yet -->
+      <picture class="media-layer media-still media-still--end">
+        <source media="(min-width: 780px)" srcset="media/tilt/end-large.webp">
+        <source media="(min-width: 570px)" srcset="media/tilt/end-medium.webp">
+        <img src="media/tilt/end-small.webp" width="420" height="480" alt=""
              loading="lazy" decoding="async">
       </picture>
     </div>
@@ -474,10 +482,18 @@
          aria-label="An alert list over a photograph of a cinder cone at night. The rows open to make room and a new alert settles into the space, its indicator ringing once, followed by a line saying it was sent to four recipients.">
       <video class="media-layer media-clip" preload="none" muted playsinline
              data-basepath="media/alert/" data-ladder="small,medium,large"></video>
-      <picture class="media-layer media-still">
+      <picture class="media-layer media-still media-still--start">
         <source media="(min-width: 780px)" srcset="media/alert/start-large.webp">
         <source media="(min-width: 570px)" srcset="media/alert/start-medium.webp">
         <img src="media/alert/start-small.webp" width="420" height="480" alt=""
+             loading="lazy" decoding="async">
+      </picture>
+      <!-- the frame the clip ends on, for reduced motion and no JS: frame 0 of
+           this one is a picture of nothing having happened yet -->
+      <picture class="media-layer media-still media-still--end">
+        <source media="(min-width: 780px)" srcset="media/alert/end-large.webp">
+        <source media="(min-width: 570px)" srcset="media/alert/end-medium.webp">
+        <img src="media/alert/end-small.webp" width="420" height="480" alt=""
              loading="lazy" decoding="async">
       </picture>
     </div>
@@ -563,10 +579,18 @@
          aria-label="A map of the network over an aerial photograph of the coast. A single contour expands outward from the summit, and each station it passes turns from grey to the accent colour as the count climbs from zero to fourteen.">
       <video class="media-layer media-clip" preload="none" muted playsinline
              data-basepath="media/network/" data-ladder="small,medium,large"></video>
-      <picture class="media-layer media-still">
+      <picture class="media-layer media-still media-still--start">
         <source media="(min-width: 780px)" srcset="media/network/start-large.webp">
         <source media="(min-width: 570px)" srcset="media/network/start-medium.webp">
         <img src="media/network/start-small.webp" width="420" height="480" alt=""
+             loading="lazy" decoding="async">
+      </picture>
+      <!-- the frame the clip ends on, for reduced motion and no JS: frame 0 of
+           this one is a picture of nothing having happened yet -->
+      <picture class="media-layer media-still media-still--end">
+        <source media="(min-width: 780px)" srcset="media/network/end-large.webp">
+        <source media="(min-width: 570px)" srcset="media/network/end-medium.webp">
+        <img src="media/network/end-small.webp" width="420" height="480" alt=""
              loading="lazy" decoding="async">
       </picture>
     </div>
@@ -676,7 +700,14 @@
 </main>
 
 <script type="module">
+  document.documentElement.classList.remove("no-js");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // The class is what the stylesheet keys off: apple-base.css drops the moving
+  // layer out of the stack and leaves the photograph in it. Hiding the whole
+  // stack instead takes the photograph with it — and setting hidden on an
+  // element the stylesheet still displays is worse than either, because it
+  // stays on screen and disappears from the accessibility tree.
+  if (reduced) document.documentElement.classList.add("reduced-motion");
 
   // The enhancement gate, exactly as apple.com computes it: the scroll-linked
   // layout only exists once these pass. Without this script the pinned section
@@ -694,7 +725,7 @@
   const MEDIA_BP = { small: 0, medium: 570, large: 780, xlarge: 1280 };
   for (const v of document.querySelectorAll("video[data-basepath]")) {
     const stack = v.closest(".media-stack");
-    if (reduced) { stack.hidden = true; continue; }
+    if (reduced) continue;       // never fetched; the still is what the page shows
     const have = (v.dataset.ladder || "small,medium,large").split(",");
     const pick = () => {
       let name = "small";
