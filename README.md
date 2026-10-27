@@ -98,6 +98,14 @@ stuck below full opacity (which multiplies every ink step inside it), sticky
 elements that cannot stick because an ancestor clips scrolling, and headline
 length against Apple's median of three words.
 
+Three of its findings come from measuring the page in a second state rather
+than reading one: it sets `prefers-reduced-motion` and names the clip slots
+that were full without the preference and blank with it, reports the share of
+the screen that is a **gradient** (real Apple pages measure 0–4%; a page at
+100% has no subject, only a backdrop), and flags clips painted wider than the
+file they came from, and elements marked `hidden` that still have a layout box
+— on screen for the eye, gone from the accessibility tree.
+
 It walks the page before measuring, so scroll-triggered reveals have run and
 are not counted as hidden content.
 
@@ -313,7 +321,7 @@ node test/media.mjs                     # the clip ladder, the stack, the fallba
 node test/gallery.mjs                   # the carousel: paddles, dots, keyboard
 ```
 
-352 checks across the seven. `test/media.mjs` is the widest of them: it reads
+357 checks across the seven. `test/media.mjs` is the widest of them: it reads
 the six clip files off disk (moov before mdat, no audio track, inside the byte
 budget, three crops at three aspect ratios), then drives a real browser through
 the markup as parsed, the source the loader picks at 1440px, at 2&times; and at

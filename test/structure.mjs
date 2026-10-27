@@ -114,6 +114,18 @@ ok("audit reports a page with no rest in it",
 ok("the ink-over-media check sweeps the whole page, not the first screen",
    /for \(let sweepY = 0; sweepY < document\.body\.scrollHeight/.test(auditSrc));
 
+// The audit pass that sets the preference instead of grepping for a rule.
+ok("audit measures the page with reduced motion set",
+   /setEmulatedMedia[\s\S]{0,200}prefers-reduced-motion/.test(auditSrc));
+ok("the reduced-motion check compares the two passes",
+   /before\[i\] && before\[i\]\.slotInLayout/.test(auditSrc));
+ok("audit reports the gradient share it already measured",
+   /gradientShare/.test(auditSrc) && /of what a visitor sees is a gradient/.test(auditSrc));
+ok("audit flags a clip painted wider than its source",
+   /painted wider than the file they came from/.test(auditSrc));
+ok("audit flags an element that is hidden and on screen anyway",
+   /marked hidden are still painted/.test(auditSrc));
+
 // The showcase page is one event told in order. The clocks are the spine, and
 // a spine that does not run forwards is decoration.
 const clocks = [...showcase.matchAll(/class="[^"]*\bclock\b[^"]*"[^>]*>(\d\d:\d\d)</g)]

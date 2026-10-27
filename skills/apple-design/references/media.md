@@ -154,8 +154,18 @@ html.no-js .video-element-stack          { display: none; visibility: hidden; }
 ```
 
 With `prefers-reduced-motion: reduce` the play plugin **returns before
-registering anything**. The clip is never fetched and never plays; the stack is
-removed from the layout and a still is loaded in its place. Same for `no-js`.
+registering anything**. The clip never plays; the stack is removed from the
+layout and a still is loaded in its place. Same for `no-js`.
+
+Measured, the *fetch* is less clean than the play: with the preference set,
+4 of 12 clips on the MacBook Pro page and 1 on the iPad Pro page still get a
+`src` assigned, even though none carries one in the markup. So the contract to
+copy is the one that matters to the visitor — nothing moves, and the slot holds
+a picture rather than a hole — not a claim that no bytes are requested. What
+must not happen is the stack going blank: hiding the video without putting the
+still in its place is the bug, and `tools/audit.mjs` measures it by running the
+page twice, once with the preference and once without, and flagging only the
+slots that were full before and empty after.
 
 Apple also uses a CSS custom property as the switch for *which* still gets
 fetched, read back by the lazy-loader:

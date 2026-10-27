@@ -258,7 +258,18 @@ function probeFn() {
         const r = n.getBoundingClientRect();
         return r.width > b.width * 0.6 && r.height > b.height * 0.6;
       })));
+    // The same measurement the reduced-motion pass takes, so the two can be
+    // compared. On its own "the slot is empty" means nothing — an idle
+    // carousel slide is empty too. A slot that was full and is now empty is
+    // the preference breaking the page.
+    const slotEl = v.closest("section, figure, article, li") || v.parentElement;
+    const vis = (el) => el.checkVisibility
+      ? el.checkVisibility({ checkVisibilityCSS: true })
+      : getComputedStyle(el).display !== "none" && el.offsetParent !== null;
+    const slotInLayout = vis(v) ||
+      (slotEl ? [...slotEl.querySelectorAll("img")].some(vis) : false);
     out.media.clips.push({
+      slotInLayout,
       still, muted: v.muted, inline: v.playsInline, preload: v.preload,
       autoplay: v.hasAttribute("autoplay"), loop: v.loop,
       named: !!(v.getAttribute("aria-label") || v.getAttribute("title")),
@@ -303,6 +314,20 @@ function probeFn() {
     where: pathOf(hero),
   } : null;
   out.media.belowFold = { total: below, deferred, custom };
+
+  // The hidden attribute means "not relevant", and the browser enforces it
+  // with display: none from the UA sheet — which any author rule with a
+  // display loses nothing to. Set hidden on an element the stylesheet gives a
+  // display and it stays on screen and leaves the accessibility tree: visible
+  // to everyone except the people the attribute exists for.
+  out.hiddenPainted = [];
+  for (const el of document.querySelectorAll("[hidden]")) {
+    const cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden") continue;
+    const b = el.getBoundingClientRect();
+    if (b.width < 8 || b.height < 8) continue;
+    out.hiddenPainted.push({ where: pathOf(el), w: Math.round(b.width), h: Math.round(b.height) });
+  }
 
   // Pace. A long page whose sections are all one screenful has no rhythm —
   // it has a frequency, and every screen lands with the same weight. The
@@ -746,6 +771,59 @@ function probeSoulFn() {
   return JSON.stringify(out);
 }
 
+// ------------------------------------------------- the reduced-motion pass
+// Every other check in this file asks whether a reduced-motion RULE exists.
+// This one sets the preference and looks at what the page actually does with
+// it. The two failures worth catching are the clip being downloaded anyway,
+// and the slot it was in ending up empty — which is what happens when the
+// fallback hides the whole stack instead of the moving layer, because the
+// still lives inside that stack.
+function probeReducedFn() {
+  const pathOf = (el) => {
+    const bit = (n) => n.tagName.toLowerCase() +
+      (n.id ? "#" + n.id : (n.className && typeof n.className === "string"
+        ? "." + n.className.trim().split(/\s+/).slice(0, 2).join(".") : ""));
+    const p = el.parentElement;
+    return (p && p !== document.body ? bit(p) + " > " : "") + bit(el);
+  };
+  const shows = (el) => {
+    if (!el) return false;
+    const cs = getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden" || +cs.opacity < 0.05) return false;
+    const b = el.getBoundingClientRect();
+    return b.width > 8 && b.height > 8;
+  };
+  const out = { clips: [] };
+  for (const v of document.querySelectorAll("video")) {
+    // the slot is the nearest ancestor that also holds a picture — at most a
+    // few levels up, so an unrelated image elsewhere cannot stand in for one
+    // The slot is the section the clip sits in, not its immediate wrapper.
+    // apple.com hides the whole video stack under this preference — start
+    // frame included — and loads a SEPARATE fallback picture elsewhere in the
+    // section, so anything tighter than this flags their correct pattern.
+    const slot = v.closest("section, figure, article, li") || v.parentElement;
+    const imgs = slot ? [...slot.querySelectorAll("img")] : [];
+    // Three different states, and only two of them are the page's fault. An
+    // <img> that exists and is not hidden but has no box yet is a lazy image
+    // this environment never got round to loading — on a live page it would
+    // have arrived. An <img> the stylesheet has switched off, or no <img> at
+    // all, is a slot that will be empty for a real visitor too.
+    // checkVisibility walks ancestors, which is the whole point here: the
+    // image itself is display: inline while the stack above it is display:
+    // none. Reading the element's own computed style says it is fine.
+    const laidOut = (el) => el.checkVisibility
+      ? el.checkVisibility({ checkVisibilityCSS: true })
+      : getComputedStyle(el).display !== "none" && el.offsetParent !== null;
+    out.clips.push({
+      where: pathOf(v),
+      fetched: !!(v.currentSrc || v.getAttribute("src")),
+      slotInLayout: laidOut(v) || imgs.some(laidOut),
+      stillShows: imgs.some(shows),
+    });
+  }
+  return JSON.stringify(out);
+}
+
 // ------------------------------------------------------------------ driver
 export async function runAudit(url, widths = WIDTHS, mode = null) {
 const prof = fs.mkdtempSync(os.tmpdir() + "/audit-");
@@ -800,8 +878,30 @@ const measure = async (width) => {
 };
 
 const byWidth = {};
+let reducedPass = null;
 try {
   for (const w of widths) byWidth[w] = await measure(w);
+  // Only worth a second page load if there is something to degrade.
+  if (((byWidth[widths[0]] || {}).media || {}).clips?.length) {
+    await call("Emulation.setEmulatedMedia",
+      { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
+    await call("Emulation.setDeviceMetricsOverride",
+      { width: widths[0], height: 900, deviceScaleFactor: 1, mobile: false });
+    await call("Page.navigate", { url });
+    await sleep(4000);
+    await call("Runtime.evaluate", { expression: `(async () => {
+      const step = innerHeight * 0.8;
+      for (let y = 0; y < document.body.scrollHeight; y += step) {
+        window.scrollTo(0, y);
+        await new Promise((r) => setTimeout(r, 120));
+      }
+    })()`, awaitPromise: true });
+    await sleep(600);
+    const rr = await call("Runtime.evaluate",
+      { expression: `(${probeReducedFn.toString()})()`, returnByValue: true });
+    if (!rr.exceptionDetails) reducedPass = JSON.parse(rr.result.value);
+    await call("Emulation.setEmulatedMedia", { features: [] });
+  }
 } finally {
   // a leaked headless Chrome survives the process and holds a core at 50%,
   // so the teardown runs whether the probe succeeded or threw
@@ -1060,6 +1160,14 @@ if (!useErp && sl.screens) {
         `${pc(sl.flat)} of the page is flat colour, ${pc(sl.text)} is text, and there are ${sl.mediaCount} media element(s) in the markup`,
         "apple.com's median is 38% media against 12% text — roughly three times as much picture as copy. A page at this level has nothing to look at, and no amount of spacing fixes that. See references/composition.md for the ratios and references/imagery.md for where real images come from, including when the project arrives with none.");
 
+  // Four shares are measured and only three were ever printed, so a page
+  // whose backdrop is one big gradient reported 0% picture, 0% text and 0%
+  // flat and looked like a broken measurement. It is not: it is the finding.
+  if (sl.gradient > 0.5)
+    add(9, `${pc(sl.gradient)} of what a visitor sees is a gradient`,
+        `against ${pc(sl.media)} picture and ${pc(sl.text)} text`,
+        "A gradient is what a page reaches for when it has no subject: it fills the screen, costs nothing and means nothing, and it is the single most reliable tell of a generated page. apple.com's backdrops are a photograph, a product render, or a flat surface colour. Put the real thing in — references/imagery.md is where to get one when the project supplies none — and keep the gradient, if at all, for a scrim over it.");
+
   if (sl.deadScreens / sl.screens > 0.35)
     add(9, `${sl.deadScreens} of ${sl.screens} screenful(s) contain no image at all`,
         "a reader can scroll a whole viewport and see only colour and type",
@@ -1141,6 +1249,27 @@ if (!useErp) {
         "The file's aspect and the box's aspect disagree by more than a quarter, and object-fit is not cover — so the clip is sitting in bars. Apple re-cuts the crop to the slot instead: the same three seconds ship at 0.88 on phones, 1.62 on tablets and 2.06 on desktop. Either cut a crop that matches this box or let it fill with object-fit: cover and accept the trim. See references/media.md.",
         boxed.map((c) => c.where).filter(Boolean));
 
+  // A clip painted wider than the file it came from. The interface inside it
+  // is type, and type upscaled 15% is type that reads as a slide rather than
+  // as a product.
+  // Only at desktop widths. A 500px viewport in this headless browser is at
+  // dpr 1, which no phone is: a real one gets the 2x file into that box and
+  // is oversampled, not upscaled. Measuring it here would flag every page
+  // that art-directs its crops correctly.
+  // And only for a clip sitting INSIDE the column. apple.com's widest crop is
+  // 1260px, so a full-bleed photograph is painted past its file on any screen
+  // wider than that by design — there is no bigger rung to pick, and cover
+  // plus a retina 2x file is what carries it. The defect is a clip in a
+  // bounded slot given a file smaller than the slot, where a wider crop was
+  // available and a lower rung got picked.
+  const up = atWidth.filter((c) => c.at >= 780 && c.w && c.boxW &&
+    c.boxW < c.at * 0.98 && c.boxW > c.w * 1.08);
+  if (up.length)
+    add(7, `${up.length} clip(s) painted wider than the file they came from`,
+        up.map((c) => `${c.at}px: ${c.src || "clip"} ${c.w}px wide in a ${c.boxW}px box`).join("  "),
+        "Upscaling a photograph costs sharpness; upscaling an interface costs legibility, because everything in it is type at a size somebody chose. apple.com's widest clip crop is 1260px and it is never bled past the content column — a UI clip sits in the column with the card radius on it, and full-bleed is for photographs. Either ship a wider crop or stop stretching this one. See references/media.md.",
+        up.map((c) => c.where).filter(Boolean));
+
   // art direction: the same files at 1440 and at 500 means one render stretched
   const wide = new Set(md.srcs || []), thin = new Set(narrow.srcs || []);
   const shared = [...wide].filter((u) => thin.has(u));
@@ -1184,6 +1313,38 @@ if (!useErp) {
         "A long page is loud, quiet, loud, quiet, and a rest only reads as a rest if it is visibly shorter than what surrounds it. Apple's product pages run a full-screen hero, then a few hundred pixels of one sentence, then full-bleed media, then a short stat strip. Every section at one screenful is a frequency, not a rhythm — it is the main reason a page whose tokens are all correct still reads as generated. See references/composition.md.",
         []);
 
+  // What the preference actually does, measured with it set, rather than
+  // whether a rule mentioning it exists.
+  if (reducedPass) {
+    // Differential, not absolute: a slot that is empty under the preference
+    // and was empty without it is an idle carousel slide, not a fallback
+    // failure. Only a slot the preference emptied counts.
+    // Matched by document order, not by a path string: the two probes build
+    // their selectors differently and only this is guaranteed to line up.
+    const before = md.clips || [];
+    const blank = reducedPass.clips.filter((c, i) =>
+      !c.slotInLayout && before[i] && before[i].slotInLayout);
+    if (blank.length)
+      add(9, `${blank.length} clip slot(s) show nothing with reduced motion set`,
+          blank.slice(0, 3).map((c) => c.where).join("  "),
+          "The still is usually inside the same stack as the clip, so a fallback that hides the STACK takes the photograph down with the video and leaves a hole. Drop the moving layer only — a class on <html> that the stylesheet keys off — and leave the picture in the layout. Watch for the quiet version of this too: setting hidden on an element your stylesheet gives a display keeps it on screen and removes it from the accessibility tree instead. See references/media.md.",
+          blank.map((c) => c.where));
+    const fetched = reducedPass.clips.filter((c) => c.fetched);
+    if (fetched.length)
+      add(4, `${fetched.length} clip(s) were given a source with reduced motion set`,
+          fetched.slice(0, 3).map((c) => c.where).join("  "),
+          "With the preference set apple.com does not pause the clip or slow it down — it never requests the file, and loads a still in its place. Bytes nobody will see are the easiest ones to not send.",
+          fetched.map((c) => c.where));
+  }
+
+  // hidden, and on screen anyway
+  const hp = d.hiddenPainted || [];
+  if (hp.length)
+    add(8, `${hp.length} element(s) marked hidden are still painted`,
+        hp.slice(0, 3).map((e) => `${e.where} ${e.w}x${e.h}`).join("  "),
+        'The hidden attribute is display: none from the UA stylesheet, and any author rule with a display in it wins. The element stays on screen and leaves the accessibility tree — visible to everyone except the people the attribute exists for. Remove the attribute and hide it in CSS, or give the rule a selector that does not fight it.',
+        hp.map((e) => e.where));
+
   if (md.moving > 0 && !md.reducedMotionRule)
     add(8, `${md.moving} element(s) animate and nothing honours reduced motion`,
         "no @media (prefers-reduced-motion) rule in any stylesheet the page can read",
@@ -1211,6 +1372,7 @@ const summary = {
   moving: (d.media || {}).moving ?? 0,
   reducedMotionRule: (d.media || {}).reducedMotionRule ?? null,
   mediaShare: sl.media ?? null, flatShare: sl.flat ?? null, textShare: sl.text ?? null,
+  gradientShare: sl.gradient ?? null,
   screens: sl.screens ?? 0, deadScreens: sl.deadScreens ?? 0,
   scaleContrast: sl.scaleContrast ?? 0, mediaCount: sl.mediaCount ?? 0,
   tells: (sl.tells || []).length,
@@ -1229,7 +1391,7 @@ const summary = {
   biggestType: e.biggestType || 0,
 };
 
-  return { summary, findings, byWidth };
+  return { summary, findings, byWidth, reducedPass };
 }
 
 // --------------------------------------------------------------------- cli
@@ -1242,7 +1404,9 @@ function report(url, { summary, findings, byWidth }, widths = WIDTHS) {
   else if (summary.dense)
     console.log(`  scored as a marketing page, but this looks like a tool — re-run with --mode erp`);
   if (summary.mode !== "erp" && summary.screens)
-    console.log(`  what a visitor sees: ${Math.round(summary.mediaShare * 100)}% picture · ${Math.round(summary.textShare * 100)}% text · ${Math.round(summary.flatShare * 100)}% flat colour  (apple.com: 38 / 12 / 51)`);
+    console.log(`  what a visitor sees: ${Math.round(summary.mediaShare * 100)}% picture · ${Math.round(summary.textShare * 100)}% text · ${Math.round(summary.flatShare * 100)}% flat colour` +
+      (summary.gradientShare ? ` · ${Math.round(summary.gradientShare * 100)}% gradient` : "") +
+      `  (apple.com: 38 / 12 / 51)`);
   console.log("");
   if (!findings.length) {
     if (summary.mode === "erp") {
